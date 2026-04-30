@@ -1,5 +1,11 @@
 # 🍔 QuickBite - Food Delivery System
 
+--- Home Page ---
+
+<img width="1883" height="907" alt="Screenshot 2026-04-30 110054" src="https://github.com/user-attachments/assets/ad4afce3-694e-444b-91f4-780267573516" />
+
+
+
 A modern **Django-based food delivery web application** similar to Zomato/Swiggy. Order food from your favorite restaurants with real-time tracking and multiple payment options.
 
 ---
@@ -264,3 +270,14 @@ python manage.py collectstatic --noinput
 ---
 
 **Made with Mr.Rajan❤️ | Happy Coding! 🚀**
+
+--- Admin Page --- 
+<img width="1887" height="913" alt="Screenshot 2026-04-30 110118" src="https://github.com/user-attachments/assets/171c4692-425a-4f68-8b26-cb330b1b86c8" />
+
+---- Menu Items ----
+
+<img width="1610" height="838" alt="Screenshot 2026-04-30 110140" src="https://github.com/user-attachments/assets/4932a8db-f03c-4632-88aa-a7f4e0140844" />
+
+
+
+
