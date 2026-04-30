@@ -6,6 +6,7 @@
 
 
 
+
 A modern **Django-based food delivery web application** similar to Zomato/Swiggy. Order food from your favorite restaurants with real-time tracking and multiple payment options.
 
 ---
