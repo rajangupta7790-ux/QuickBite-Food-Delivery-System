@@ -1,0 +1,149 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}All Restaurants — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- PAGE HEADER -->
+  <div style="margin-bottom:28px;">
+    <h1 class="section-title" style="font-size:28px;margin-bottom:6px;">All Restaurants</h1>
+    <p style="color:var(--text-muted);font-size:14px;">
+      {{ restaurants|length }} restaurants available · Mumbai
+    </p>
+  </div>
+
+  <!-- SEARCH + FILTER ROW -->
+  <div style="display:flex;gap:16px;align-items:center;margin-bottom:24px;flex-wrap:wrap;">
+    <div style="position:relative;flex:1;min-width:240px;max-width:400px;">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">🔍</span>
+      <input type="text"
+             placeholder="Search restaurants..."
+             oninput="searchRestaurants(this)"
+             style="width:100%;padding:11px 16px 11px 42px;background:#fff;border:1.5px solid var(--border);
+                    border-radius:50px;font-size:14px;color:var(--text-dark);font-family:inherit;">
+    </div>
+    <div class="filter-bar" style="margin:0;flex-wrap:nowrap;">
+      <div class="filter-chip active" onclick="setFilter(this,'all')">All</div>
+      <div class="filter-chip" onclick="setFilter(this,'veg')">💚 Pure Veg</div>
+      <div class="filter-chip" onclick="setFilter(this,'rated')">⭐ Top Rated</div>
+      <div class="filter-chip" onclick="setFilter(this,'fast')">⚡ Fast Delivery</div>
+    </div>
+  </div>
+
+  <!-- SORT BAR -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+    <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Sort by:</span>
+    <form method="get" style="display:inline;">
+  <select name="sort" onchange="this.form.submit()"
+          style="padding:7px 14px;border:1.5px solid var(--border);border-radius:50px;
+                 font-size:13px;font-weight:500;background:#fff;color:var(--text-dark);
+                 cursor:pointer;font-family:inherit;">
+    <option value="relevance" {% if current_sort == 'relevance' %}selected{% endif %}>Relevance</option>
+    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Rating</option>
+    <option value="delivery_time" {% if current_sort == 'delivery_time' %}selected{% endif %}>Delivery Time</option>
+    <option value="cost_low" {% if current_sort == 'cost_low' %}selected{% endif %}>Cost: Low to High</option>
+    <option value="cost_high" {% if current_sort == 'cost_high' %}selected{% endif %}>Cost: High to Low</option>
+  </select>
+</form>
+  </div>
+
+  <!-- RESTAURANT GRID -->
+  <div class="restaurant-grid" id="restaurantGrid">
+    {% for restaurant in restaurants %}
+    <a href="{% url 'restaurant_menu' restaurant.id %}"
+       class="card restaurant-card"
+       data-name="{{ restaurant.name|lower }}"
+       data-rating="{{ restaurant.rating }}"
+       data-time="{{ restaurant.delivery_time }}"
+       data-veg="{{ restaurant.is_pure_veg|yesno:'true,false' }}">
+      <div class="card-img">
+        {% if restaurant.image %}
+          <img src="{{ restaurant.image.url }}" alt="{{ restaurant.name }}" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          <span style="font-size:52px;">{{ restaurant.emoji|default:"🍽️" }}</span>
+        {% endif %}
+        <div class="card-img-overlay">
+          {% if restaurant.discount %}<span class="discount-badge">{{ restaurant.discount }}</span>{% else %}<span></span>{% endif %}
+          <span style="background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;">
+            {{ restaurant.delivery_time|default:"30-40" }} mins
+          </span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">{{ restaurant.name }}</div>
+        <div class="card-cuisine">{{ restaurant.cuisine|default:"Multi-cuisine" }}</div>
+        <div class="card-meta">
+          <span class="rating-badge">⭐ {{ restaurant.rating|default:"4.2" }}</span>
+          <span class="delivery-time">🕐 {{ restaurant.delivery_time|default:"30" }} mins</span>
+          <span class="min-order">₹{{ restaurant.min_order|default:"99" }} min</span>
+        </div>
+      </div>
+    </a>
+    {% empty %}
+    {% for i in "12345678910111213141516" %}
+    <a href="#" class="card restaurant-card">
+      <div class="card-img" style="background:linear-gradient(135deg,#ffe0c0,#ffc896);">
+        <span style="font-size:52px;">🍽️</span>
+        <div class="card-img-overlay">
+          <span class="discount-badge">30% OFF</span>
+          <span style="background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;">25 mins</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Demo Restaurant {{ forloop.counter }}</div>
+        <div class="card-cuisine">Indian, Chinese</div>
+        <div class="card-meta">
+          <span class="rating-badge">⭐ 4.{{ forloop.counter|add:"0"|slice:":1" }}</span>
+          <span class="delivery-time">🕐 25 mins</span>
+          <span class="min-order">₹99 min</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="noResults" style="display:none;">
+    <div class="empty-emoji">😕</div>
+    <h3>No restaurants found</h3>
+    <p>Try a different search or filter</p>
+    <button class="btn btn-primary" onclick="resetSearch()">Clear Filters</button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchRestaurants(input) {
+  const q = input.value.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('#restaurantGrid .restaurant-card').forEach(card => {
+    const name = card.dataset.name || '';
+    const show = name.includes(q);
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function setFilter(el, type) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#restaurantGrid .restaurant-card').forEach(card => {
+    if (type === 'all') { card.style.display = ''; return; }
+    if (type === 'veg')   { card.style.display = card.dataset.veg === 'true' ? '' : 'none'; }
+    if (type === 'rated') { card.style.display = parseFloat(card.dataset.rating) >= 4.3 ? '' : 'none'; }
+    if (type === 'fast')  { card.style.display = parseInt(card.dataset.time) <= 30 ? '' : 'none'; }
+  });
+}
+
+function resetSearch() {
+  document.querySelectorAll('#restaurantGrid .restaurant-card').forEach(c => c.style.display = '');
+  document.getElementById('noResults').style.display = 'none';
+}
+</script>
+{% endblock %}

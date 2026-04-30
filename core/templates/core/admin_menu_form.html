@@ -1,0 +1,190 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}{{ action|default:"Menu Items" }} — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand">
+      <span style="font-size:22px;">🍔</span> QuickBite
+    </div>
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+  <main class="admin-content">
+<div style="max-width:800px;margin:40px auto;padding:0 24px;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:14px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="{% url 'admin_dashboard' %}"
+         style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--border);
+                display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none;color:var(--text-muted);">←</a>
+      <div>
+        <h1 style="font-size:22px;font-weight:800;">{{ action|default:"Menu Items" }}</h1>
+        <p style="font-size:13px;color:var(--text-muted);">{{ restaurant.name }}</p>
+      </div>
+    </div>
+    {% if not action %}
+    <a href="{% url 'admin_add_menu_item' restaurant_pk=restaurant.pk %}" class="btn btn-primary btn-sm">+ Add Item</a>
+    {% endif %}
+  </div>
+
+  {% if action %}
+  <!-- ══ ADD / EDIT FORM ══ -->
+  <form method="post"
+        style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+    {% csrf_token %}
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Name + Emoji -->
+      <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;">
+        <div>
+          <label class="form-label">Item Name *</label>
+          <input type="text" name="name" class="form-control" required
+                 value="{{ item.name|default:'' }}" placeholder="e.g. Butter Chicken">
+        </div>
+        <div>
+          <label class="form-label">Emoji</label>
+          <input type="text" name="emoji" class="form-control" maxlength="4"
+                 value="{{ item.emoji|default:'🍛' }}">
+        </div>
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label class="form-label">Menu Category *</label>
+        <select name="menu_category" class="form-control" style="cursor:pointer;" required>
+          <option value="">-- Select Category --</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if item.menu_category.id == cat.id %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="2"
+                  placeholder="Short description..." style="resize:none;">{{ item.description|default:'' }}</textarea>
+      </div>
+
+      <!-- Price + Original Price -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label class="form-label">Price (₹) *</label>
+          <input type="number" name="price" class="form-control" required step="0.01" min="0"
+                 value="{{ item.price|default:'' }}" placeholder="199">
+        </div>
+        <div>
+          <label class="form-label">Original Price (₹) <span style="color:var(--text-muted);font-weight:400;">(for strikethrough)</span></label>
+          <input type="number" name="original_price" class="form-control" step="0.01" min="0"
+                 value="{{ item.original_price|default:'' }}" placeholder="249 (optional)">
+        </div>
+      </div>
+
+      <!-- Toggles -->
+      <div style="display:flex;gap:24px;padding:14px 16px;background:var(--bg);border-radius:var(--radius-sm);flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500;">
+          <input type="checkbox" name="is_veg" style="accent-color:var(--success);width:16px;height:16px;"
+                 {% if item.is_veg or not item %}checked{% endif %}> 💚 Veg
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500;">
+          <input type="checkbox" name="is_available" style="accent-color:var(--primary);width:16px;height:16px;"
+                 {% if item.is_available or not item %}checked{% endif %}> ✅ Available
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500;">
+          <input type="checkbox" name="is_bestseller" style="accent-color:var(--primary);width:16px;height:16px;"
+                 {% if item.is_bestseller %}checked{% endif %}> 🔥 Bestseller
+        </label>
+      </div>
+
+    </div>
+    <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end;background:var(--bg);">
+      <a href="{% url 'admin_menu_items' restaurant_pk=restaurant.pk %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">{{ action }} Item</button>
+    </div>
+  </form>
+
+  {% else %}
+  <!-- ══ ITEMS LIST ══ -->
+  {% if items %}
+  <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            <div style="font-weight:600;">{{ item.emoji }} {{ item.name }}</div>
+            {% if item.is_bestseller %}<span style="font-size:10px;font-weight:700;color:var(--primary);">🔥 BESTSELLER</span>{% endif %}
+          </td>
+          <td style="color:var(--text-muted);">{{ item.menu_category.name|default:"—" }}</td>
+          <td>
+            <span style="font-weight:700;">₹{{ item.price }}</span>
+            {% if item.original_price %}<span style="font-size:12px;color:var(--text-muted);text-decoration:line-through;margin-left:4px;">₹{{ item.original_price }}</span>{% endif %}
+          </td>
+          <td>
+            {% if item.is_veg %}
+              <span style="color:var(--success);font-size:12px;font-weight:600;">💚 Veg</span>
+            {% else %}
+              <span style="color:var(--danger);font-size:12px;font-weight:600;">🔴 Non-veg</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="status-badge {% if item.is_available %}confirmed{% else %}cancelled{% endif %}">
+              {% if item.is_available %}Available{% else %}Unavailable{% endif %}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;gap:8px;">
+              <a href="{% url 'admin_edit_menu_item' pk=item.pk %}" class="btn btn-outline btn-sm">Edit</a>
+              <form method="post" action="{% url 'admin_delete_menu_item' pk=item.pk %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="button" onclick="confirmDelete(this.form)"
+                        class="btn btn-sm" style="background:#fce4ec;color:var(--danger);border:none;">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow-sm);">
+    <div class="empty-emoji">🍽️</div>
+    <h3>No menu items yet</h3>
+    <p>Add your first item to this restaurant's menu</p>
+    <a href="{% url 'admin_add_menu_item' restaurant_pk=restaurant.pk %}" class="btn btn-primary">+ Add First Item</a>
+  </div>
+  {% endif %}
+  {% endif %}
+
+</div>
+  </main>
+</div>
+{% endblock %}

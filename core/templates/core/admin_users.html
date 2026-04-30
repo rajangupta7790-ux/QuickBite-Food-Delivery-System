@@ -1,0 +1,208 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}Users — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand"><span style="font-size:22px;">🍔</span> QuickBite</div>
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item active"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">👥 All Users</h1>
+        <p style="font-size:13px;color:var(--text-muted);">{{ users|length }} registered users</p>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Joined</th>
+            <th>Orders</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#ff6b35);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;">
+                  {{ u.first_name|first|upper|default:u.username|first|upper }}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">{{ u.get_full_name|default:u.username }}</div>
+                  <div style="font-size:12px;color:var(--text-muted);">@{{ u.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="color:var(--text-muted);font-size:13px;">{{ u.email|default:"—" }}</td>
+            <td style="color:var(--text-muted);font-size:13px;">{{ u.profile.phone|default:"—" }}</td>
+            <td style="color:var(--text-muted);font-size:12px;">{{ u.date_joined|date:"d M Y" }}</td>
+            <td style="font-weight:600;">{{ u.orders.count }}</td>
+            <td>
+              {% if u.is_superuser %}
+                <span class="status-badge confirmed">Superuser</span>
+              {% elif u.is_staff %}
+                <span class="status-badge preparing">Staff</span>
+              {% else %}
+                <span class="status-badge" style="background:#f1f5f9;color:#64748b;">User</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <a href="{% url 'admin_view_user' u.id %}" class="btn btn-outline btn-sm">View</a>
+                <button onclick="editUser({{ u.id }},'{{ u.first_name }}','{{ u.last_name }}','{{ u.email }}','{{ u.profile.phone|default:'' }}',{{ u.is_staff|lower }})"
+                        class="btn btn-outline btn-sm">Edit</button>
+                <button onclick="banUser({{ u.id }},'{{ u.username }}',{{ u.is_active|lower }})"
+                        class="btn btn-sm"
+                        style="background:{% if u.is_active %}#fff3e0{% else %}#e8f5e9{% endif %};color:{% if u.is_active %}#e65100{% else %}#2e7d32{% endif %};border:none;">
+                  {% if u.is_active %}Ban{% else %}Unban{% endif %}
+                </button>
+                {% if u != request.user %}
+                <button onclick="deleteUser({{ u.id }},'{{ u.username }}')"
+                        class="btn btn-sm" style="background:#fce4ec;color:#e74c3c;border:none;">Delete</button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No users found</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+{% block extra_js %}
+<script>
+function deleteUser(id, username) {
+  showModal({
+    icon: '🗑️',
+    title: 'Delete User?',
+    msg: `Are you sure you want to permanently delete "@${username}"? This cannot be undone.`,
+    btnText: 'Yes, Delete',
+    btnColor: '#e74c3c',
+    onConfirm: () => {
+      fetch(`/dashboard/user/${id}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      }).then(r => r.json()).then(data => {
+        if (data.success) {
+          showToast(`@${username} deleted successfully`, 'success');
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast(data.error || 'Error deleting user', 'error');
+        }
+      });
+    }
+  });
+}
+
+function banUser(id, username, isActive) {
+  showModal({
+    icon: isActive ? '🚫' : '✅',
+    title: isActive ? 'Ban User?' : 'Unban User?',
+    msg: isActive
+      ? `Ban "@${username}"? They won't be able to login.`
+      : `Unban "@${username}"? They will regain access.`,
+    btnText: isActive ? 'Yes, Ban' : 'Yes, Unban',
+    btnColor: isActive ? '#e65100' : '#1ba672',
+    onConfirm: () => {
+      fetch(`/dashboard/user/${id}/ban/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      }).then(r => r.json()).then(data => {
+        if (data.success) {
+          showToast(`@${username} ${data.is_active ? 'unbanned' : 'banned'} successfully`, 'success');
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast(data.error || 'Error', 'error');
+        }
+      });
+    }
+  });
+}
+
+function editUser(id, firstName, lastName, email, phone, isStaff) {
+  const modal = document.getElementById('customModal');
+  document.getElementById('modalIcon').textContent  = '✏️';
+  document.getElementById('modalTitle').textContent = 'Edit User';
+  document.getElementById('modalMsg').innerHTML = `
+    <div style="text-align:left;display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">First Name</label>
+          <input id="ef_first" value="${firstName}" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Last Name</label>
+          <input id="ef_last" value="${lastName}" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Email</label>
+        <input id="ef_email" value="${email}" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Phone</label>
+        <input id="ef_phone" value="${phone}" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;cursor:pointer;">
+        <input type="checkbox" id="ef_staff" ${isStaff ? 'checked' : ''} style="accent-color:#fc8019;width:15px;height:15px;">
+        Make Staff (Admin access)
+      </label>
+    </div>
+  `;
+  const btn = document.getElementById('modalConfirmBtn');
+  btn.textContent      = 'Save Changes';
+  btn.style.background = '#fc8019';
+  btn.onclick = () => {
+    const formData = new FormData();
+    formData.append('first_name', document.getElementById('ef_first').value);
+    formData.append('last_name',  document.getElementById('ef_last').value);
+    formData.append('email',      document.getElementById('ef_email').value);
+    formData.append('phone',      document.getElementById('ef_phone').value);
+    formData.append('is_staff',   document.getElementById('ef_staff').checked ? 'true' : 'false');
+    fetch(`/dashboard/user/${id}/edit/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: formData
+    }).then(r => r.json()).then(data => {
+      closeModal();
+      if (data.success) {
+        showToast('User updated successfully ✅', 'success');
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(data.error || 'Error updating user', 'error');
+      }
+    });
+  };
+  modal.style.display = 'flex';
+}
+</script>
+{% endblock %}
+
+{% endblock %}

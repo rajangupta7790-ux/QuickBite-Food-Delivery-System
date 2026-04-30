@@ -1,0 +1,389 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Your Cart — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width:960px;">
+
+  <!-- PAGE HEADER -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+    <a href="{% url 'restaurants' %}" style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-muted);text-decoration:none;flex-shrink:0;">←</a>
+    <div>
+      <h1 style="font-size:24px;font-weight:800;margin-bottom:2px;">🛒 Your Cart</h1>
+      <p style="font-size:13px;color:var(--text-muted);">
+        {% if cart_items %}{{ cart_items|length }} item{{ cart_items|length|pluralize }} · {{ restaurant_name }}{% else %}No items added{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if cart_items %}
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+
+    <!-- ═══ LEFT: CART ITEMS ═══ -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Restaurant Info Bar -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🍽️</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;">{{ restaurant_name|default:"Restaurant" }}</div>
+            <div style="font-size:12px;color:var(--text-muted);">Mumbai</div>
+          </div>
+        </div>
+        {% if restaurant_id %}
+        <a href="{% url 'restaurant_menu' restaurant_id %}"
+           style="font-size:13px;font-weight:600;color:var(--primary);text-decoration:none;padding:7px 14px;border:1.5px solid var(--primary);border-radius:50px;transition:all 0.2s;"
+           onmouseover="this.style.background='var(--primary)';this.style.color='#fff'"
+           onmouseout="this.style.background='';this.style.color='var(--primary)'">
+          + Add more
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Items List -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);" id="cartItemsContainer">
+        {% for item in cart_items %}
+        <div class="cart-row" id="row-{{ item.id }}"
+             style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--border);transition:opacity 0.3s;">
+
+          <!-- Veg indicator -->
+          <div class="veg-indicator {% if item.is_veg %}veg{% else %}nonveg{% endif %}" style="flex-shrink:0;margin:0;">
+            <div class="veg-dot"></div>
+          </div>
+
+          <!-- Item details -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ item.name }}</div>
+            <div style="font-size:13px;color:var(--text-muted);">₹{{ item.price }} per item</div>
+          </div>
+
+          <!-- Qty Control -->
+          <div style="display:flex;align-items:center;border:2px solid var(--primary);border-radius:50px;overflow:hidden;flex-shrink:0;">
+            <button onclick="cartChangeQty({{ item.id }}, -1)"
+                    style="width:32px;height:32px;background:var(--primary);color:#fff;border:none;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+            <span id="qty-{{ item.id }}" style="min-width:28px;text-align:center;font-size:14px;font-weight:700;color:var(--primary);padding:0 2px;">{{ item.quantity }}</span>
+            <button onclick="cartChangeQty({{ item.id }}, 1)"
+                    style="width:32px;height:32px;background:var(--primary);color:#fff;border:none;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+
+          <!-- Item Total -->
+          <div style="min-width:64px;text-align:right;">
+            <div id="itemtotal-{{ item.id }}" style="font-size:16px;font-weight:700;">₹{{ item.total }}</div>
+          </div>
+
+          <!-- Remove -->
+          <button onclick="removeItem({{ item.id }})"
+                  title="Remove item"
+                  style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--border);color:var(--text-muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;"
+                  onmouseover="this.style.background='#fce4ec';this.style.color='var(--danger)';this.style.borderColor='var(--danger)'"
+                  onmouseout="this.style.background='var(--bg)';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">✕</button>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Coupon Section -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          🏷️ Apply Coupon
+        </div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="couponInput" placeholder="Enter coupon code"
+                 style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+                        font-size:14px;font-family:inherit;transition:border-color 0.2s;text-transform:uppercase;"
+                 oninput="this.value=this.value.toUpperCase()"
+                 onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          <button onclick="applyCoupon()" class="btn btn-outline btn-sm" style="white-space:nowrap;flex-shrink:0;">Apply</button>
+        </div>
+        <div id="couponMsg" style="font-size:13px;margin-top:8px;display:none;padding:8px 12px;border-radius:var(--radius-sm);"></div>
+        <!-- Quick coupons -->
+        <div style="margin-top:12px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500;">Available offers:</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="quickCoupon('FIRST50')"
+                    style="padding:5px 12px;border:1.5px dashed var(--primary);border-radius:6px;font-size:12px;font-weight:600;color:var(--primary);background:var(--primary-light);cursor:pointer;transition:all 0.2s;">
+              FIRST50 — 50% off
+            </button>
+            <button onclick="quickCoupon('SAVE20')"
+                    style="padding:5px 12px;border:1.5px dashed var(--primary);border-radius:6px;font-size:12px;font-weight:600;color:var(--primary);background:var(--primary-light);cursor:pointer;transition:all 0.2s;">
+              SAVE20 — ₹20 off
+            </button>
+            <button onclick="quickCoupon('FREESHIP')"
+                    style="padding:5px 12px;border:1.5px dashed var(--success);border-radius:6px;font-size:12px;font-weight:600;color:var(--success);background:#e8f5e9;cursor:pointer;transition:all 0.2s;">
+              FREESHIP — Free delivery
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Info -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">🚀 Delivery Details</div>
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:20px;margin-top:2px;">📍</span>
+          <div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Delivering to Mumbai</div>
+            <div style="font-size:13px;color:var(--text-muted);">Estimated time: <strong style="color:var(--primary);">30-40 mins</strong></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ RIGHT: BILL SUMMARY ═══ -->
+    <div style="position:sticky;top:calc(var(--nav-height) + 16px);display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Bill Card -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-md);">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+          <div style="font-size:15px;font-weight:700;">Bill Summary</div>
+        </div>
+        <div style="padding:18px 20px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:11px;font-size:14px;">
+            <span style="color:var(--text-muted);">Item Total (<span id="billItemCount">{{ cart_items|length }}</span> items)</span>
+            <span id="billSubtotal" style="font-weight:600;">₹{{ subtotal }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:11px;font-size:14px;">
+            <span style="color:var(--text-muted);">Delivery Fee
+              {% if subtotal >= 299 %}<span style="font-size:11px;color:var(--success);font-weight:600;"> (free above ₹299)</span>{% endif %}
+            </span>
+            <span id="billDelivery" style="font-weight:600;color:{% if delivery_fee == 0 %}var(--success){% else %}var(--text-dark){% endif %};">
+              {% if delivery_fee == 0 %}FREE{% else %}₹{{ delivery_fee }}{% endif %}
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:11px;font-size:14px;">
+            <span style="color:var(--text-muted);">Platform Fee</span>
+            <span style="font-weight:600;">₹5</span>
+          </div>
+          <div id="discountRow" style="display:{% if discount %}flex{% else %}none{% endif %};justify-content:space-between;margin-bottom:11px;font-size:14px;">
+            <span style="color:var(--success);font-weight:500;">🏷️ Coupon Discount</span>
+            <span id="billDiscount" style="font-weight:700;color:var(--success);">− ₹{{ discount|default:0 }}</span>
+          </div>
+          <div style="border-top:1.5px dashed var(--border);margin:14px 0;"></div>
+          <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;">
+            <span>To Pay</span>
+            <span id="billTotal" style="color:var(--primary);">₹{{ total }}</span>
+          </div>
+        </div>
+        <div style="padding:0 20px 20px;">
+          <a href="{% url 'checkout' %}" class="btn btn-primary" id="checkoutBtn"
+             style="width:100%;justify-content:center;font-size:15px;padding:13px;">
+            Proceed to Checkout →
+          </a>
+        </div>
+      </div>
+
+      <!-- Savings banner -->
+      {% if delivery_fee == 0 %}
+      <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:var(--radius-md);padding:12px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">🎉</span>
+        <span style="font-size:13px;font-weight:600;color:var(--success);">You're getting FREE delivery on this order!</span>
+      </div>
+      {% else %}
+      <div style="background:var(--primary-light);border:1px solid rgba(252,128,25,0.25);border-radius:var(--radius-md);padding:12px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">💡</span>
+        <span style="font-size:13px;color:var(--primary);">Add items worth <strong>₹{{ free_delivery_gap }}</strong> more for free delivery!</span>
+      </div>
+      {% endif %}
+
+      <!-- Safe checkout -->
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;padding:8px;">
+        <span style="font-size:14px;">🔒</span>
+        <span style="font-size:12px;color:var(--text-muted);">Safe & secure checkout</span>
+      </div>
+
+    </div>
+  </div>
+
+  {% else %}
+  <!-- ═══ EMPTY CART ═══ -->
+  <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border);padding:64px 24px;text-align:center;box-shadow:var(--shadow-sm);">
+    <div style="font-size:72px;margin-bottom:16px;filter:grayscale(0.2);">🛒</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:8px;">Your cart is empty!</h2>
+    <p style="font-size:15px;color:var(--text-muted);margin-bottom:28px;max-width:320px;margin-left:auto;margin-right:auto;">
+      Looks like you haven't added anything yet. Explore restaurants and order something delicious!
+    </p>
+    <a href="{% url 'restaurants' %}" class="btn btn-primary btn-lg">Browse Restaurants 🍔</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ── COUPON CONFIG ─────────────────────────────────────────
+const COUPONS = {
+  'FIRST50':  { type: 'percent', value: 50,  label: '50% off applied!' },
+  'SAVE20':   { type: 'flat',    value: 20,  label: '₹20 discount applied!' },
+  'FREESHIP': { type: 'ship',    value: 0,   label: 'Free delivery applied!' },
+};
+let appliedCoupon = null;
+
+// Read initial values from Django
+let subtotal  = {{ subtotal|default:0 }};
+let discount  = 0;
+
+// ── CART QTY CHANGE ──────────────────────────────────────
+function cartChangeQty(itemId, delta) {
+  fetch('/cart/update/', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body:    JSON.stringify({ item_id: itemId, delta }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.success) return;
+
+    const qtyEl   = document.getElementById(`qty-${itemId}`);
+    const totalEl = document.getElementById(`itemtotal-${itemId}`);
+    const row     = document.getElementById(`row-${itemId}`);
+
+    if (!qtyEl) return;
+    const newQty = parseInt(qtyEl.textContent) + delta;
+
+    if (newQty <= 0) {
+      // Animate out then remove
+      row.style.opacity = '0';
+      setTimeout(() => {
+        row.remove();
+        subtotal = data.total || 0;
+        recalcBill();
+        updateBadge(data.cart_count);
+        // Check if cart is now empty
+        if (document.querySelectorAll('.cart-row').length === 0) {
+          location.reload();
+        }
+      }, 300);
+    } else {
+      qtyEl.textContent = newQty;
+      // Recalculate item total from price
+      const priceText = row.querySelector('[style*="per item"]')?.textContent || '';
+      const price = parseFloat(priceText.replace('₹','').replace(' per item','')) || 0;
+      if (totalEl) totalEl.textContent = `₹${Math.round(price * newQty)}`;
+      subtotal = data.total || recalcSubtotal();
+      recalcBill();
+      updateBadge(data.cart_count);
+    }
+  });
+}
+
+// ── REMOVE ITEM ──────────────────────────────────────────
+function removeItem(itemId) {
+  // Remove = keep decrementing until 0
+  const qtyEl = document.getElementById(`qty-${itemId}`);
+  if (!qtyEl) return;
+  const qty = parseInt(qtyEl.textContent);
+  // Fire delta = -qty to clear
+  fetch('/cart/update/', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body:    JSON.stringify({ item_id: itemId, delta: -qty }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    const row = document.getElementById(`row-${itemId}`);
+    row.style.opacity = '0';
+    setTimeout(() => {
+      row.remove();
+      subtotal = data.total || 0;
+      recalcBill();
+      updateBadge(data.cart_count);
+      showToast('Item removed from cart', '');
+      if (document.querySelectorAll('.cart-row').length === 0) location.reload();
+    }, 300);
+  });
+}
+
+// ── RECALC FROM DOM ──────────────────────────────────────
+function recalcSubtotal() {
+  let total = 0;
+  document.querySelectorAll('.cart-row').forEach(row => {
+    const qty   = parseInt(row.querySelector('[id^="qty-"]')?.textContent || '0');
+    const price = parseFloat(row.querySelector('[style*="per item"]')?.textContent?.replace('₹','') || '0');
+    total += qty * price;
+  });
+  return total;
+}
+
+// ── BILL RECALCULATION ───────────────────────────────────
+function recalcBill() {
+  const delivery = subtotal >= 299 ? 0 : 40;
+  let   disc     = 0;
+
+  if (appliedCoupon) {
+    const c = COUPONS[appliedCoupon];
+    if (c.type === 'percent') disc = Math.round(subtotal * c.value / 100);
+    if (c.type === 'flat')    disc = c.value;
+    if (c.type === 'ship')    disc = delivery; // absorb delivery cost
+  }
+
+  const total   = subtotal + delivery + 5 - disc;
+  const itemCnt = document.querySelectorAll('.cart-row').length;
+
+  // Update DOM
+  const subEl   = document.getElementById('billSubtotal');
+  const delEl   = document.getElementById('billDelivery');
+  const totEl   = document.getElementById('billTotal');
+  const cntEl   = document.getElementById('billItemCount');
+  const discRow = document.getElementById('discountRow');
+  const discEl  = document.getElementById('billDiscount');
+
+  if (subEl) subEl.textContent = `₹${Math.round(subtotal)}`;
+  if (cntEl) cntEl.textContent = itemCnt;
+  if (delEl) {
+    if (appliedCoupon && COUPONS[appliedCoupon]?.type === 'ship') {
+      delEl.textContent = 'FREE'; delEl.style.color = 'var(--success)';
+    } else if (delivery === 0) {
+      delEl.textContent = 'FREE'; delEl.style.color = 'var(--success)';
+    } else {
+      delEl.textContent = `₹${delivery}`; delEl.style.color = 'var(--text-dark)';
+    }
+  }
+  if (discRow) discRow.style.display = disc > 0 ? 'flex' : 'none';
+  if (discEl)  discEl.textContent = `− ₹${disc}`;
+  if (totEl)   totEl.textContent  = `₹${Math.round(Math.max(total, 0))}`;
+}
+
+// ── COUPON ────────────────────────────────────────────────
+function quickCoupon(code) {
+  document.getElementById('couponInput').value = code;
+  applyCoupon();
+}
+
+function applyCoupon() {
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  const msg  = document.getElementById('couponMsg');
+  msg.style.display = 'block';
+
+  if (COUPONS[code]) {
+    appliedCoupon = code;
+    sessionStorage.setItem('appliedCoupon', code);
+    msg.textContent   = '✅ ' + COUPONS[code].label;
+    msg.style.background = '#e8f5e9';
+    msg.style.color      = 'var(--success)';
+    msg.style.border     = '1px solid #a5d6a7';
+    recalcBill();
+    showToast('Coupon applied! 🎉', 'success');
+  } else if (code === '') {
+    msg.textContent = '⚠️ Please enter a coupon code';
+    msg.style.background = '#fff8e1';
+    msg.style.color      = '#f57f17';
+    msg.style.border     = '1px solid #ffe082';
+  } else {
+    appliedCoupon = null;
+    sessionStorage.removeItem('appliedCoupon');
+    msg.textContent   = '❌ Invalid coupon code';
+    msg.style.background = '#fce4ec';
+    msg.style.color      = 'var(--danger)';
+    msg.style.border     = '1px solid #f8bbd0';
+    recalcBill();
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => recalcBill());
+</script>
+{% endblock %}

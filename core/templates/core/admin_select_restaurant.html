@@ -1,0 +1,52 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}Select Restaurant — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand"><span style="font-size:22px;">🍔</span> QuickBite</div>
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item active"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="margin-bottom:28px;">
+      <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">🍛 Menu Items</h1>
+      <p style="font-size:13px;color:var(--text-muted);">Select a restaurant to manage its menu</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+      {% for r in restaurants %}
+      <a href="{% url 'admin_menu_items' restaurant_pk=r.id %}"
+         style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:20px 24px;text-decoration:none;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-sm);transition:box-shadow 0.2s;"
+         onmouseover="this.style.boxShadow='var(--shadow-md)'"
+         onmouseout="this.style.boxShadow='var(--shadow-sm)'">
+        <span style="font-size:36px;">{{ r.emoji }}</span>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-dark);">{{ r.name }}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">{{ r.cuisine }}</div>
+          <div style="font-size:12px;color:var(--primary);margin-top:4px;font-weight:600;">{{ r.menu_items.count }} items</div>
+        </div>
+      </a>
+      {% empty %}
+      <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
+        No restaurants found. <a href="{% url 'admin_add_restaurant' %}" style="color:var(--primary);">Add one</a>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}QuickBite — Order Food Online{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- ═══════════ HERO BANNER ═══════════ -->
+  <div class="hero-banner">
+    <div class="hero-text">
+      <h1>Hungry? <br>We've got you covered 🔥</h1>
+      <p>Order from the best restaurants near you. Fast delivery, great food.</p>
+      <a href="{% url 'restaurants' %}" class="btn btn-white btn-lg">Explore Restaurants →</a>
+    </div>
+    <div class="hero-emoji">🍔</div>
+  </div>
+
+  <!-- ═══════════ WELCOME COUPON ALERT ═══════════ -->
+  {% if request.session.welcome_coupon %}
+  <div id="couponAlert" style="background:linear-gradient(135deg,#fc8019,#ff6b35);border-radius:var(--radius-md);padding:18px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(252,128,25,0.3);flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span style="font-size:36px;">🎁</span>
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#fff;">Welcome Gift! {{ request.session.welcome_coupon.desc }}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:2px;">
+          Use code: <strong style="background:rgba(255,255,255,0.2);padding:2px 10px;border-radius:20px;letter-spacing:1px;">{{ request.session.welcome_coupon.code }}</strong>
+          &nbsp;·&nbsp; Expires in: <span id="couponTimer" style="font-weight:700;">24:00:00</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a href="{% url 'restaurants' %}" style="background:#fff;color:var(--primary);padding:9px 20px;border-radius:50px;font-size:13px;font-weight:700;text-decoration:none;">Order Now →</a>
+      <button onclick="dismissCoupon()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ═══════════ PROMO BANNERS ═══════════ -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:40px;">
+    <div style="background:linear-gradient(135deg,#1ba672,#0d7a52);border-radius:var(--radius-md);padding:20px 24px;display:flex;align-items:center;gap:16px;">
+      <span style="font-size:40px;">🆓</span>
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#fff;">Free Delivery</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.8);">On orders above ₹299</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#1565c0,#0d47a1);border-radius:var(--radius-md);padding:20px 24px;display:flex;align-items:center;gap:16px;">
+      <span style="font-size:40px;">⚡</span>
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#fff;">30 Min Delivery</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.8);">Lightning fast to your door</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#6a1b9a,#4a148c);border-radius:var(--radius-md);padding:20px 24px;display:flex;align-items:center;gap:16px;">
+      <span style="font-size:40px;">🎉</span>
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#fff;">50% OFF First Order</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.8);">Use code: FIRST50</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ CATEGORIES ═══════════ -->
+  <h2 class="section-title">What's on your mind?</h2>
+  <div class="category-scroll">
+    <a href="#" class="category-pill active" onclick="filterByCategory('all', this); return false;">
+      <span class="pill-emoji">🍽️</span>
+      <span class="pill-label">All</span>
+    </a>
+    {% for cat in categories %}
+    <a href="#"
+       class="category-pill"
+       onclick="filterByCategory('{{ cat.slug }}', this); return false;"
+       style="text-decoration:none;">
+      <span class="pill-emoji">{{ cat.emoji }}</span>
+      <span class="pill-label">{{ cat.name }}</span>
+    </a>
+    {% empty %}
+    <div class="category-pill active"><span class="pill-emoji">🍕</span><span class="pill-label">Pizza</span></div>
+    <div class="category-pill"><span class="pill-emoji">🍔</span><span class="pill-label">Burgers</span></div>
+    <div class="category-pill"><span class="pill-emoji">🍛</span><span class="pill-label">Biryani</span></div>
+    <div class="category-pill"><span class="pill-emoji">🍜</span><span class="pill-label">Chinese</span></div>
+    <div class="category-pill"><span class="pill-emoji">🍣</span><span class="pill-label">Sushi</span></div>
+    <div class="category-pill"><span class="pill-emoji">🥗</span><span class="pill-label">Salads</span></div>
+    <div class="category-pill"><span class="pill-emoji">🍦</span><span class="pill-label">Desserts</span></div>
+    <div class="category-pill"><span class="pill-emoji">☕</span><span class="pill-label">Beverages</span></div>
+    <div class="category-pill"><span class="pill-emoji">🥙</span><span class="pill-label">Wraps</span></div>
+    {% endfor %}
+  </div>
+
+  <!-- ═══════════ FILTER BAR ═══════════ -->
+  <div class="filter-bar">
+    <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Filter:</span>
+    <a href="{% url 'restaurants' %}"               class="filter-chip">All</a>
+    <a href="{% url 'restaurants' %}?sort=rating"   class="filter-chip">⭐ Top Rated</a>
+    <a href="{% url 'restaurants' %}?sort=delivery_time" class="filter-chip">⚡ Fast Delivery</a>
+    <a href="{% url 'restaurants' %}?veg=1"         class="filter-chip">💚 Pure Veg</a>
+    <a href="{% url 'restaurants' %}?sort=cost_low" class="filter-chip">💰 Budget</a>
+  </div>
+
+  <!-- ═══════════ RESTAURANT GRID ═══════════ -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div>
+      <h2 class="section-title" style="margin-bottom:0;">
+        Restaurants near you
+      </h2>
+      <p class="section-subtitle" id="restaurantCount">{{ restaurants|length }} place{{ restaurants|length|pluralize }} found</p>
+    </div>
+    <a href="{% url 'restaurants' %}" style="font-size:14px;font-weight:600;color:var(--primary);">View all →</a>
+  </div>
+
+  <div class="restaurant-grid" id="homeRestaurantGrid">
+    {% for restaurant in restaurants %}
+    <a href="{% url 'restaurant_menu' restaurant.pk %}"
+       class="card restaurant-card"
+       data-categories="{% for cat in restaurant.categories.all %}{{ cat.slug }} {% endfor %}">
+
+      <!-- Image / Emoji -->
+      <div class="card-img">
+        {% if restaurant.image %}
+          <img src="{{ restaurant.image.url }}"
+               alt="{{ restaurant.name }}"
+               style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          <span style="font-size:56px;">{{ restaurant.emoji }}</span>
+        {% endif %}
+
+        <div class="card-img-overlay">
+          {% if restaurant.discount %}
+            <span class="discount-badge">{{ restaurant.discount }}</span>
+          {% else %}
+            <span></span>
+          {% endif %}
+          <span style="background:rgba(0,0,0,0.5);color:#fff;font-size:11px;
+                       padding:3px 8px;border-radius:6px;">
+            {{ restaurant.delivery_time }} mins
+          </span>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="card-body">
+        <div class="card-name">{{ restaurant.name }}</div>
+        <div class="card-cuisine">{{ restaurant.cuisine }}</div>
+        <div class="card-meta">
+          <span class="rating-badge">⭐ {{ restaurant.rating }}</span>
+          <span class="delivery-time">🕐 {{ restaurant.delivery_time }} mins</span>
+          <span class="min-order">₹{{ restaurant.min_order }} min</span>
+        </div>
+      </div>
+
+    </a>
+    {% empty %}
+    <!-- No restaurants in DB yet — show placeholder -->
+    <div style="grid-column:1/-1;padding:48px 24px;text-align:center;background:#fff;
+                border-radius:var(--radius-md);border:1px dashed var(--border);">
+      <div style="font-size:56px;margin-bottom:12px;">🍽️</div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">No restaurants yet</h3>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">
+        Run <code style="background:var(--bg);padding:2px 8px;border-radius:4px;">python manage.py seed_data</code> to add demo restaurants
+      </p>
+      <a href="/admin/" class="btn btn-primary btn-sm">Open Django Admin</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ═══════════ TOP RATED SECTION ═══════════ -->
+  {% if top_rated %}
+  <div style="margin-top:48px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <h2 class="section-title" style="margin-bottom:0;">⭐ Top Rated Near You</h2>
+        <p class="section-subtitle">Customers love these places</p>
+      </div>
+    </div>
+    <div class="restaurant-grid">
+      {% for restaurant in top_rated %}
+      <a href="{% url 'restaurant_menu' restaurant.pk %}" class="card restaurant-card">
+        <div class="card-img">
+          {% if restaurant.image %}
+            <img src="{{ restaurant.image.url }}" alt="{{ restaurant.name }}" style="width:100%;height:100%;object-fit:cover;">
+          {% else %}
+            <span style="font-size:56px;">{{ restaurant.emoji }}</span>
+          {% endif %}
+          <div class="card-img-overlay">
+            {% if restaurant.discount %}<span class="discount-badge">{{ restaurant.discount }}</span>{% else %}<span></span>{% endif %}
+            <span style="background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;">{{ restaurant.delivery_time }} mins</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">{{ restaurant.name }}</div>
+          <div class="card-cuisine">{{ restaurant.cuisine }}</div>
+          <div class="card-meta">
+            <span class="rating-badge">⭐ {{ restaurant.rating }}</span>
+            <span class="delivery-time">🕐 {{ restaurant.delivery_time }} mins</span>
+            <span class="min-order">₹{{ restaurant.min_order }} min</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sync cart count from session on page load
+fetch('/cart/update/', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+  body: JSON.stringify({ item_id: '__ping__', delta: 0 })
+}).catch(() => {});
+
+// Category filter — NO page reload, NO scroll to top
+function filterByCategory(slug, clickedEl) {
+  // Active pill update
+  document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+  if (clickedEl) clickedEl.classList.add('active');
+
+  // Filter cards
+  const cards = document.querySelectorAll('#homeRestaurantGrid .restaurant-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const cats = card.dataset.categories || '';
+    const show = slug === 'all' || cats.trim().split(/\s+/).includes(slug);
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  // Update count text
+  const countEl = document.getElementById('restaurantCount');
+  if (countEl) countEl.textContent = visible + ' place' + (visible !== 1 ? 's' : '') + ' found';
+}
+
+// Coupon timer
+{% if request.session.welcome_coupon %}
+(function() {
+  const expires = {{ request.session.welcome_coupon.expires }};
+  function updateTimer() {
+    const left = Math.max(0, expires - Date.now()/1000);
+    if (left === 0) { 
+      document.getElementById('couponAlert') && (document.getElementById('couponAlert').style.display='none');
+      return;
+    }
+    const h = Math.floor(left/3600);
+    const m = Math.floor((left%3600)/60);
+    const s = Math.floor(left%60);
+    const el = document.getElementById('couponTimer');
+    if (el) el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    setTimeout(updateTimer, 1000);
+  }
+  updateTimer();
+})();
+{% endif %}
+
+function dismissCoupon() {
+  document.getElementById('couponAlert').style.display = 'none';
+}
+
+</script>
+{% endblock %}

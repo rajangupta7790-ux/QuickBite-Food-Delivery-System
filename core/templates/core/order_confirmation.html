@@ -1,0 +1,167 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Order Confirmed! — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width:680px;text-align:center;padding-top:48px;">
+
+  <!-- SUCCESS ANIMATION -->
+  <div style="margin-bottom:28px;">
+    <div style="width:100px;height:100px;background:linear-gradient(135deg,#fc8019,#ff6b35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:48px;margin:0 auto 20px;box-shadow:0 8px 32px rgba(252,128,25,0.35);animation:popIn 0.5s cubic-bezier(.175,.885,.32,1.275);">
+      ✅
+    </div>
+    <h1 style="font-size:30px;font-weight:800;margin-bottom:8px;color:var(--text-dark);">Order Placed! 🎉</h1>
+    <p style="font-size:16px;color:var(--text-muted);">Your order has been placed successfully.</p>
+  </div>
+
+  <!-- ORDER ID CARD -->
+  <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border);padding:28px;margin-bottom:20px;box-shadow:var(--shadow-md);">
+    <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Order ID</div>
+    <div style="font-size:24px;font-weight:800;color:var(--primary);margin-bottom:20px;letter-spacing:1px;">#{{ order.order_id|default:"QB123456" }}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div style="text-align:center;padding:14px;background:var(--bg);border-radius:var(--radius-sm);">
+        <div style="font-size:22px;margin-bottom:6px;">🍽️</div>
+        <div style="font-size:12px;color:var(--text-muted);">Restaurant</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px;">{{ order.restaurant|default:"Demo Restaurant" }}</div>
+      </div>
+      <div style="text-align:center;padding:14px;background:var(--bg);border-radius:var(--radius-sm);">
+        <div style="font-size:22px;margin-bottom:6px;">💰</div>
+        <div style="font-size:12px;color:var(--text-muted);">Total Paid</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px;">₹{{ order.total|default:"404" }}</div>
+      </div>
+      <div style="text-align:center;padding:14px;background:var(--bg);border-radius:var(--radius-sm);">
+        <div style="font-size:22px;margin-bottom:6px;">💳</div>
+        <div style="font-size:12px;color:var(--text-muted);">Payment</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px;">{{ order.payment_method|default:"Cash on Delivery" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Order Tracking -->
+  <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border);padding:28px;margin-bottom:20px;box-shadow:var(--shadow-md);">
+    <div style="font-size:16px;font-weight:700;margin-bottom:24px;">🔴 Live Order Tracking</div>
+
+    <div id="statusContainer">
+      <div style="position:relative;">
+        <div style="position:absolute;top:20px;left:20px;right:20px;height:3px;background:var(--border);z-index:0;"></div>
+        <div id="progressBar" style="position:absolute;top:20px;left:20px;height:3px;background:var(--primary);z-index:1;width:0%;transition:width 1s ease;"></div>
+        
+        <div style="display:flex;justify-content:space-between;position:relative;z-index:2;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--primary);background:var(--primary);">✅</div>
+            <div style="font-size:11px;font-weight:700;color:var(--primary);text-align:center;">Order Placed</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div class="step-dot" style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--border);background:#fff;">🍳</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Confirmed</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div class="step-dot" style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--border);background:#fff;">👨‍🍳</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Preparing</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div class="step-dot" style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--border);background:#fff;">🛵</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Out for Delivery</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div class="step-dot" style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--border);background:#fff;">🎉</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Delivered</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding:14px 18px;background:var(--primary-light);border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;animation:bounce 1s infinite;">⚡</span>
+        <div style="text-align:left;">
+          <div style="font-size:14px;font-weight:700;color:var(--primary);" id="statusLabel">Order Placed</div>
+          <div style="font-size:12px;color:var(--text-muted);">Estimated delivery: 30-40 minutes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELIVERY ADDRESS -->
+  <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:20px 24px;margin-bottom:20px;text-align:left;box-shadow:var(--shadow-sm);">
+    <div style="font-size:15px;font-weight:700;margin-bottom:10px;">📍 Delivering to</div>
+    <div style="font-size:14px;color:var(--text-mid);">{{ order.address|default:"123, Demo Street, Andheri West, Mumbai - 400053" }}</div>
+  </div>
+
+  <!-- CTA BUTTONS -->
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+    <a href="{% url 'orders' %}" class="btn btn-primary btn-lg">View My Orders</a>
+    <a href="{% url 'home' %}" class="btn btn-outline btn-lg">Order More Food</a>
+  </div>
+
+</div>
+
+<style>
+@keyframes popIn { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+</style>
+
+{% block extra_js %}
+<script>
+let currentStatus = '{{ order.status }}';
+
+function pollStatus() {
+  fetch('/order/{{ order.pk }}/status/', { method: 'GET' })
+    .then(r => r.json())
+    .then(data => {
+      const newStatus = data.status;
+      
+      // Cancelled?
+      if (newStatus === 'cancelled') {
+        document.getElementById('statusContainer').innerHTML = `
+          <div style="text-align:center;padding:30px;background:#fce4ec;border-radius:10px;">
+            <h2 style="color:#e74c3c;">❌ Order Cancelled</h2>
+            <p>Admin ne order cancel kar diya hai</p>
+            <a href="/restaurants/" class="btn btn-primary">Order Again</a>
+          </div>
+        `;
+        return;
+      }
+      
+      // Status changed?
+      if (newStatus !== currentStatus) {
+        currentStatus = newStatus;
+        updateProgressBar(newStatus);
+        showToast(`Order ${data.status_display}! 🎉`, 'success');
+      }
+      
+      // Delivered? Stop polling
+      if (newStatus === 'delivered') {
+        clearInterval(pollingInterval);
+      }
+    });
+}
+
+function updateProgressBar(status) {
+  const progressMap = {
+    'pending': '0%',
+    'confirmed': '25%',
+    'preparing': '50%',
+    'out_for_delivery': '75%',
+    'delivered': '100%'
+  };
+  
+  const statusLabels = {
+    'pending': '⏳ Waiting Confirmation',
+    'confirmed': '✅ Order Confirmed',
+    'preparing': '👨‍🍳 Chef Preparing',
+    'out_for_delivery': '🛵 Out for Delivery',
+    'delivered': '🎉 Delivered!'
+  };
+  
+  document.getElementById('progressBar').style.width = progressMap[status] || '0%';
+  document.getElementById('statusLabel').textContent = statusLabels[status];
+}
+
+// Start polling on page load
+const pollingInterval = setInterval(pollStatus, 5000);
+pollStatus(); // Initial check
+</script>
+{% endblock %}
+
+{% endblock %}

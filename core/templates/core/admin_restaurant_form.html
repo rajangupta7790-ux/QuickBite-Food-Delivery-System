@@ -1,0 +1,146 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}{{ action }} Restaurant — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand">
+      <span style="font-size:22px;">🍔</span> QuickBite
+    </div>
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+  <main class="admin-content">
+<div style="max-width:680px;margin:40px auto;padding:0 24px;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+    <a href="{% url 'admin_dashboard' %}"
+       style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--border);
+              display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none;color:var(--text-muted);">←</a>
+    <div>
+      <h1 style="font-size:22px;font-weight:800;">{{ action }} Restaurant</h1>
+      <p style="font-size:13px;color:var(--text-muted);">Admin Panel</p>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data"
+        style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+    {% csrf_token %}
+
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Name + Emoji -->
+      <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;">
+        <div>
+          <label class="form-label">Restaurant Name *</label>
+          <input type="text" name="name" class="form-control" required
+                 value="{{ restaurant.name|default:'' }}" placeholder="e.g. Spice Garden">
+        </div>
+        <div>
+          <label class="form-label">Emoji</label>
+          <input type="text" name="emoji" class="form-control"
+                 value="{{ restaurant.emoji|default:'🍽️' }}" placeholder="🍽️" maxlength="4">
+        </div>
+      </div>
+
+      <!-- Cuisine -->
+      <div>
+        <label class="form-label">Cuisine Types *</label>
+        <input type="text" name="cuisine" class="form-control" required
+               value="{{ restaurant.cuisine|default:'' }}" placeholder="e.g. North Indian, Chinese">
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="3"
+                  placeholder="Short description about the restaurant..."
+                  style="resize:none;">{{ restaurant.description|default:'' }}</textarea>
+      </div>
+
+      <!-- Rating + Delivery Time -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label class="form-label">Rating (0–5)</label>
+          <input type="number" name="rating" class="form-control" step="0.1" min="0" max="5"
+                 value="{{ restaurant.rating|default:'4.0' }}">
+        </div>
+        <div>
+          <label class="form-label">Delivery Time (mins)</label>
+          <input type="number" name="delivery_time" class="form-control" min="10"
+                 value="{{ restaurant.delivery_time|default:'30' }}">
+        </div>
+      </div>
+
+      <!-- Min Order + Avg Cost + Delivery Fee -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+        <div>
+          <label class="form-label">Min Order (₹)</label>
+          <input type="number" name="min_order" class="form-control"
+                 value="{{ restaurant.min_order|default:'99' }}">
+        </div>
+        <div>
+          <label class="form-label">Avg Cost for 2 (₹)</label>
+          <input type="number" name="avg_cost" class="form-control"
+                 value="{{ restaurant.avg_cost|default:'200' }}">
+        </div>
+        <div>
+          <label class="form-label">Delivery Fee (₹)</label>
+          <input type="number" name="delivery_fee" class="form-control"
+                 value="{{ restaurant.delivery_fee|default:'40' }}">
+        </div>
+      </div>
+
+      <!-- Discount + Offer -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label class="form-label">Discount Label</label>
+          <input type="text" name="discount" class="form-control"
+                 value="{{ restaurant.discount|default:'' }}" placeholder="e.g. 40% OFF">
+        </div>
+        <div>
+          <label class="form-label">Offer Text</label>
+          <input type="text" name="offer" class="form-control"
+                 value="{{ restaurant.offer|default:'' }}" placeholder="e.g. Free delivery above ₹299">
+        </div>
+      </div>
+
+      <!-- Toggles -->
+      <div style="display:flex;gap:28px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:500;">
+          <input type="checkbox" name="is_pure_veg" style="accent-color:var(--success);width:16px;height:16px;"
+                 {% if restaurant.is_pure_veg %}checked{% endif %}>
+          💚 Pure Veg
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:500;">
+          <input type="checkbox" name="is_active" style="accent-color:var(--primary);width:16px;height:16px;"
+                 {% if restaurant.is_active or action == 'Add' %}checked{% endif %}>
+          ✅ Active (visible to users)
+        </label>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:18px 24px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end;background:var(--bg);">
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">{{ action }} Restaurant</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

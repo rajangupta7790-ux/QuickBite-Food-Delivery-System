@@ -1,0 +1,362 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Checkout — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width:960px;">
+
+  <!-- PAGE HEADER -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+    <a href="{% url 'cart' %}" style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-muted);text-decoration:none;flex-shrink:0;">←</a>
+    <div>
+      <h1 style="font-size:24px;font-weight:800;margin-bottom:2px;">📦 Checkout</h1>
+      <p style="font-size:13px;color:var(--text-muted);">Almost there! Fill in your details to place the order.</p>
+    </div>
+  </div>
+
+  <!-- PROGRESS STEPS -->
+  <div style="display:flex;align-items:center;gap:0;margin-bottom:32px;background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:16px 24px;box-shadow:var(--shadow-sm);">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700;flex-shrink:0;">✓</div>
+      <span style="font-size:13px;font-weight:600;color:var(--success);">Cart</span>
+    </div>
+    <div style="flex:1;height:2px;background:var(--primary);margin:0 8px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700;flex-shrink:0;">2</div>
+      <span style="font-size:13px;font-weight:700;color:var(--primary);">Checkout</span>
+    </div>
+    <div style="flex:1;height:2px;background:var(--border);margin:0 8px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;opacity:0.5;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-muted);font-weight:700;flex-shrink:0;">3</div>
+      <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Confirm</span>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'place_order' %}" id="checkoutForm" onsubmit="return validateForm()">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;">
+
+      <!-- ═══ LEFT COLUMN ═══ -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- DELIVERY ADDRESS -->
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+          <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">📍</span>
+            <div style="font-size:16px;font-weight:700;">Delivery Address</div>
+          </div>
+          <div style="padding:22px;display:flex;flex-direction:column;gap:14px;">
+
+            <!-- Name + Phone -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div>
+                <label class="form-label">Full Name *</label>
+                <input type="text" name="full_name" id="full_name" class="form-control"
+                       value="{{ user.get_full_name }}" placeholder="Your full name" required
+                       oninput="clearError('full_name')">
+                <div id="err-full_name" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>
+              </div>
+              <div>
+                <label class="form-label">Phone Number *</label>
+                <input type="tel" name="phone" id="phone" class="form-control"
+                       value="{% if user.profile.phone %}{{ user.profile.phone }}{% endif %}"
+                       placeholder="10-digit number" required maxlength="10"
+                       oninput="clearError('phone')">
+                <div id="err-phone" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>
+              </div>
+            </div>
+
+            <!-- Address -->
+            <div>
+              <label class="form-label">Address Line *</label>
+              <input type="text" name="address" id="address" class="form-control"
+                     placeholder="House/Flat no., Street, Landmark, Area" required
+                     oninput="clearError('address')">
+              <div id="err-address" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>
+            </div>
+
+            <!-- City State PIN -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+              <div>
+                <label class="form-label">City *</label>
+                <input type="text" name="city" id="city" class="form-control"
+                       value="Mumbai" placeholder="City" required>
+              </div>
+              <div>
+                <label class="form-label">State</label>
+                <input type="text" name="state" class="form-control" value="Maharashtra" placeholder="State">
+              </div>
+              <div>
+                <label class="form-label">PIN Code *</label>
+                <input type="text" name="pincode" id="pincode" class="form-control"
+                       placeholder="400001" required maxlength="6"
+                       oninput="this.value=this.value.replace(/\D/g,'');clearError('pincode')">
+                <div id="err-pincode" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>
+              </div>
+            </div>
+
+            <!-- Address Type -->
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:10px;">Save address as</div>
+              <div style="display:flex;gap:10px;" id="addrTypeGroup">
+                <label class="addr-type-label" style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 18px;border:1.5px solid var(--primary);border-radius:50px;font-size:13px;font-weight:600;color:var(--primary);background:var(--primary-light);">
+                  <input type="radio" name="address_type" value="home" checked style="accent-color:var(--primary);display:none;" onchange="styleAddrType()"> 🏠 Home
+                </label>
+                <label class="addr-type-label" style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 18px;border:1.5px solid var(--border);border-radius:50px;font-size:13px;font-weight:600;color:var(--text-mid);">
+                  <input type="radio" name="address_type" value="work" style="accent-color:var(--primary);display:none;" onchange="styleAddrType()"> 💼 Work
+                </label>
+                <label class="addr-type-label" style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 18px;border:1.5px solid var(--border);border-radius:50px;font-size:13px;font-weight:600;color:var(--text-mid);">
+                  <input type="radio" name="address_type" value="other" style="accent-color:var(--primary);display:none;" onchange="styleAddrType()"> 📌 Other
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- PAYMENT METHOD -->
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+          <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">💳</span>
+            <div style="font-size:16px;font-weight:700;">Payment Method</div>
+          </div>
+          <div style="padding:18px 22px;display:flex;flex-direction:column;gap:10px;">
+
+            <label class="payment-option" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--primary);border-radius:var(--radius-sm);cursor:pointer;background:var(--primary-light);">
+              <input type="radio" name="payment_method" value="cod" checked
+                     style="accent-color:var(--primary);width:18px;height:18px;" onchange="highlightPayment()">
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;">💵 Cash on Delivery</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Pay in cash when your order arrives</div>
+              </div>
+              <span style="font-size:11px;font-weight:700;color:var(--primary);background:#fff;padding:3px 9px;border-radius:50px;border:1px solid var(--primary);">Popular</span>
+            </label>
+
+            <label class="payment-option" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:#fff;">
+              <input type="radio" name="payment_method" value="upi"
+                     style="accent-color:var(--primary);width:18px;height:18px;" onchange="highlightPayment()">
+              <div>
+                <div style="font-size:14px;font-weight:600;">📱 UPI</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">GPay, PhonePe, Paytm</div>
+              </div>
+            </label>
+
+            <label class="payment-option" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:#fff;">
+              <input type="radio" name="payment_method" value="card"
+                     style="accent-color:var(--primary);width:18px;height:18px;" onchange="highlightPayment()">
+              <div>
+                <div style="font-size:14px;font-weight:600;">💳 Credit / Debit Card</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Visa, Mastercard, RuPay</div>
+              </div>
+            </label>
+
+            <label class="payment-option" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:#fff;">
+              <input type="radio" name="payment_method" value="netbanking"
+                     style="accent-color:var(--primary);width:18px;height:18px;" onchange="highlightPayment()">
+              <div>
+                <div style="font-size:14px;font-weight:600;">🏦 Net Banking</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">All major banks supported</div>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- SPECIAL INSTRUCTIONS -->
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+          <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">📝</span>
+            <div>
+              <div style="font-size:16px;font-weight:700;">Special Instructions</div>
+              <div style="font-size:12px;color:var(--text-muted);">Optional</div>
+            </div>
+          </div>
+          <div style="padding:20px 22px;">
+            <textarea name="instructions" class="form-control" rows="3"
+                      placeholder="E.g. Less spicy, no onions, ring doorbell twice..."
+                      style="resize:none;line-height:1.6;"></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═══ RIGHT: ORDER SUMMARY ═══ -->
+      <div style="position:sticky;top:calc(var(--nav-height) + 16px);display:flex;flex-direction:column;gap:14px;">
+
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-md);">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:15px;font-weight:700;">Order Summary</div>
+            <a href="{% url 'cart' %}" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">Edit</a>
+          </div>
+
+          <!-- Items -->
+          <div style="padding:14px 20px;border-bottom:1px solid var(--border);max-height:200px;overflow-y:auto;">
+            {% for item in cart_items %}
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <div class="veg-indicator {% if item.is_veg %}veg{% else %}nonveg{% endif %}" style="flex-shrink:0;margin:0;"><div class="veg-dot"></div></div>
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-mid);">{{ item.name }}</span>
+                <span style="color:var(--text-muted);flex-shrink:0;">× {{ item.quantity }}</span>
+              </div>
+              <span style="font-weight:700;flex-shrink:0;margin-left:8px;">₹{{ item.total }}</span>
+            </div>
+            {% empty %}
+            <div style="font-size:13px;color:var(--text-muted);">No items</div>
+            {% endfor %}
+          </div>
+
+          <!-- Bill breakdown -->
+          <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+              <span style="color:var(--text-muted);">Subtotal</span>
+              <span style="font-weight:600;">₹{{ subtotal }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+              <span style="color:var(--text-muted);">Delivery Fee</span>
+              <span style="font-weight:600;color:{% if delivery_fee == 0 %}var(--success){% else %}var(--text-dark){% endif %};">
+                {% if delivery_fee == 0 %}FREE{% else %}₹{{ delivery_fee }}{% endif %}
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+              <span style="color:var(--text-muted);">Platform Fee</span>
+              <span style="font-weight:600;">₹5</span>
+            </div>
+            <div style="border-top:1.5px dashed var(--border);padding-top:10px;margin-top:4px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;">
+              <span>Total</span>
+              <span style="color:var(--primary);">₹{{ total }}</span>
+            </div>
+          </div>
+
+          <!-- Place Order CTA -->
+          <div style="padding:16px 20px;">
+            <input type="hidden" name="coupon_code" id="checkoutCouponCode" value="">
+            <button type="submit" id="placeOrderBtn" class="btn btn-primary"
+                    style="width:100%;justify-content:center;font-size:15px;padding:14px;">
+              Place Order 🎉
+            </button>
+          </div>
+        </div>
+
+        <!-- Trust badges -->
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:14px 18px;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-muted);">
+              <span style="font-size:16px;">🔒</span> 100% secure checkout — no card data stored
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-muted);">
+              <span style="font-size:16px;">⚡</span> Delivery in 30-40 minutes guaranteed
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-muted);">
+              <span style="font-size:16px;">↩️</span> Easy cancellation before order is prepared
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ── PAYMENT HIGHLIGHT ────────────────────────────────────
+function highlightPayment() {
+  document.querySelectorAll('.payment-option').forEach(el => {
+    const radio = el.querySelector('input[type=radio]');
+    if (radio.checked) {
+      el.style.borderColor = 'var(--primary)';
+      el.style.borderWidth = '2px';
+      el.style.background  = 'var(--primary-light)';
+    } else {
+      el.style.borderColor = 'var(--border)';
+      el.style.borderWidth = '1.5px';
+      el.style.background  = '#fff';
+    }
+  });
+}
+
+// ── ADDRESS TYPE STYLE ───────────────────────────────────
+function styleAddrType() {
+  document.querySelectorAll('.addr-type-label').forEach(lbl => {
+    const radio = lbl.querySelector('input[type=radio]');
+    if (radio.checked) {
+      lbl.style.borderColor = 'var(--primary)';
+      lbl.style.color       = 'var(--primary)';
+      lbl.style.background  = 'var(--primary-light)';
+    } else {
+      lbl.style.borderColor = 'var(--border)';
+      lbl.style.color       = 'var(--text-mid)';
+      lbl.style.background  = '#fff';
+    }
+  });
+}
+
+// ── FORM VALIDATION ──────────────────────────────────────
+function validateForm() {
+  let valid = true;
+
+  const fields = [
+    { id: 'full_name', msg: 'Please enter your full name' },
+    { id: 'phone',     msg: 'Please enter a valid 10-digit phone number', regex: /^\d{10}$/ },
+    { id: 'address',   msg: 'Please enter your delivery address' },
+    { id: 'pincode',   msg: 'Please enter a valid 6-digit PIN code', regex: /^\d{6}$/ },
+  ];
+
+  fields.forEach(f => {
+    const el  = document.getElementById(f.id);
+    const err = document.getElementById(`err-${f.id}`);
+    if (!el || !err) return;
+    const val = el.value.trim();
+    if (!val || (f.regex && !f.regex.test(val))) {
+      err.textContent   = f.msg;
+      err.style.display = 'block';
+      el.style.borderColor = 'var(--danger)';
+      valid = false;
+    }
+  });
+
+  if (!valid) {
+    // Scroll to first error
+    const firstErr = document.querySelector('[id^="err-"]:not([style*="none"])');
+    firstErr?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    // Pass applied coupon code to backend via hidden field
+    const couponField = document.getElementById('checkoutCouponCode');
+    if (couponField) {
+      const appliedCode = sessionStorage.getItem('appliedCoupon') || '';
+      couponField.value = appliedCode;
+    }
+    // Disable button to prevent double-submit
+    const btn = document.getElementById('placeOrderBtn');
+    btn.textContent = 'Placing Order...';
+    btn.disabled    = true;
+    btn.style.opacity = '0.7';
+  }
+  return valid;
+}
+
+function clearError(fieldId) {
+  const err = document.getElementById(`err-${fieldId}`);
+  const el  = document.getElementById(fieldId);
+  if (err) err.style.display = 'none';
+  if (el)  el.style.borderColor = '';
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  highlightPayment();
+  styleAddrType();
+  // Address type click
+  document.querySelectorAll('.addr-type-label').forEach(lbl => {
+    lbl.addEventListener('click', () => {
+      lbl.querySelector('input').checked = true;
+      styleAddrType();
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}{{ u.username }} — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand"><span style="font-size:22px;">🍔</span> QuickBite</div>
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item active"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+
+    <!-- Back + Header -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+      <a href="{% url 'admin_users' %}"
+         style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--border);
+                display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none;color:var(--text-muted);">←</a>
+      <div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">👤 {{ u.get_full_name|default:u.username }}</h1>
+        <p style="font-size:13px;color:var(--text-muted);">@{{ u.username }} · Joined {{ u.date_joined|date:"d M Y" }}</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start;">
+
+      <!-- LEFT — User Info Card -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow-sm);text-align:center;">
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#ff6b35);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 14px;">
+            {{ u.first_name|first|upper|default:u.username|first|upper }}
+          </div>
+          <div style="font-size:17px;font-weight:800;margin-bottom:4px;">{{ u.get_full_name|default:u.username }}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">@{{ u.username }}</div>
+          {% if u.is_superuser %}
+            <span class="status-badge confirmed">Superuser</span>
+          {% elif u.is_staff %}
+            <span class="status-badge preparing">Staff</span>
+          {% elif not u.is_active %}
+            <span class="status-badge cancelled">Banned</span>
+          {% else %}
+            <span class="status-badge" style="background:#f1f5f9;color:#64748b;">User</span>
+          {% endif %}
+        </div>
+
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:20px;box-shadow:var(--shadow-sm);">
+          <div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;">Details</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+              <span style="color:var(--text-muted);">Email</span>
+              <span style="font-weight:600;">{{ u.email|default:"—" }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+              <span style="color:var(--text-muted);">Phone</span>
+              <span style="font-weight:600;">{{ u.profile.phone|default:"—" }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+              <span style="color:var(--text-muted);">Total Orders</span>
+              <span style="font-weight:600;">{{ user_orders|length }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+              <span style="color:var(--text-muted);">Total Spent</span>
+              <span style="font-weight:600;color:var(--primary);">
+                ₹{% with total=0 %}{% for o in user_orders %}{% if o.status == 'delivered' %}{{ o.total|add:0 }}{% endif %}{% endfor %}{% endwith %}
+                {{ user_orders|length|default:"0" }}
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+              <span style="color:var(--text-muted);">Last Login</span>
+              <span style="font-weight:600;">{{ u.last_login|date:"d M Y"|default:"Never" }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT — Orders -->
+      <div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:16px;">📦 Order History</div>
+
+        {% if user_orders %}
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          {% for order in user_orders %}
+          <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+
+            <!-- Order Header -->
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:22px;">{{ order.restaurant.emoji }}</span>
+                <div>
+                  <div style="font-size:14px;font-weight:700;">{{ order.restaurant.name }}</div>
+                  <div style="font-size:12px;color:var(--text-muted);">{{ order.created_at|date:"d M Y, h:i A" }}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:15px;font-weight:800;color:var(--primary);">#{{ order.order_id }}</span>
+                <span class="status-badge {{ order.status }}">{{ order.get_status_display }}</span>
+              </div>
+            </div>
+
+            <!-- Order Items -->
+            <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+              {% for item in order.items.all %}
+              <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;">
+                <span style="color:var(--text-dark);">{{ item.quantity }}× {{ item.name }}</span>
+                <span style="font-weight:600;">₹{{ item.total }}</span>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Order Footer -->
+            <div style="padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:var(--bg);">
+              <div style="font-size:12px;color:var(--text-muted);">{{ order.get_payment_method_display }}</div>
+              <div style="font-size:15px;font-weight:800;">Total: ₹{{ order.total }}</div>
+            </div>
+
+          </div>
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-state" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow-sm);">
+          <div class="empty-emoji">📦</div>
+          <h3>No orders yet</h3>
+          <p>This user hasn't placed any orders</p>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

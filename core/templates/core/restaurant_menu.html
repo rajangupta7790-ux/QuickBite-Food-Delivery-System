@@ -1,0 +1,426 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{{ restaurant.name|default:"Restaurant" }} Menu — QuickBite{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════ RESTAURANT HERO ═══════════ -->
+<div style="background:#fff;border-bottom:1px solid var(--border);margin-bottom:0;">
+
+  <div style="height:240px;background:linear-gradient(135deg,#fc8019,#ff6b35);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+    {% if restaurant.image %}
+      <img src="{{ restaurant.image.url }}" style="width:100%;height:100%;object-fit:cover;opacity:0.75;position:absolute;inset:0;">
+    {% else %}
+      <span style="font-size:90px;filter:drop-shadow(0 4px 24px rgba(0,0,0,0.25));">{{ restaurant.emoji|default:"🍽️" }}</span>
+    {% endif %}
+    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.55),transparent);"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:18px 32px;display:flex;align-items:flex-end;justify-content:space-between;">
+      <div>
+        <h1 style="font-size:28px;font-weight:800;color:#fff;margin-bottom:4px;text-shadow:0 2px 8px rgba(0,0,0,0.3);">
+          {{ restaurant.name|default:"Demo Restaurant" }}
+        </h1>
+        <p style="color:rgba(255,255,255,0.85);font-size:14px;">{{ restaurant.cuisine|default:"Multi-cuisine" }}</p>
+      </div>
+      <span class="rating-badge" style="font-size:14px;padding:6px 14px;">⭐ {{ restaurant.rating|default:"4.2" }}</span>
+    </div>
+  </div>
+
+  <!-- META BAR -->
+  <div class="page-wrapper" style="padding-top:14px;padding-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+      <span style="font-size:13px;color:var(--text-muted);">🕐 <strong style="color:var(--text-dark);">{{ restaurant.delivery_time|default:"30-40" }} mins</strong></span>
+      <span style="font-size:13px;color:var(--text-muted);">💰 <strong style="color:var(--text-dark);">₹{{ restaurant.avg_cost|default:"200" }} for two</strong></span>
+      <span style="font-size:13px;color:var(--text-muted);">🛵 Min. <strong style="color:var(--text-dark);">₹{{ restaurant.min_order|default:"99" }}</strong></span>
+      {% if restaurant.is_pure_veg %}
+      <span style="font-size:12px;font-weight:700;color:var(--success);background:#e8f5e9;padding:5px 12px;border-radius:20px;">💚 Pure Veg</span>
+      {% endif %}
+      {% if restaurant.discount %}
+      <span class="discount-badge">🎉 {{ restaurant.discount }}</span>
+      {% endif %}
+    </div>
+    {% if restaurant.offer %}
+    <div style="margin-top:12px;background:var(--primary-light);border:1.5px dashed var(--primary);border-radius:10px;padding:9px 16px;display:inline-flex;align-items:center;gap:8px;">
+      <span>🎉</span>
+      <span style="font-size:13px;font-weight:600;color:var(--primary);">{{ restaurant.offer }}</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════ 3-COLUMN LAYOUT ═══════════ -->
+<div class="page-wrapper" style="display:grid;grid-template-columns:200px 1fr 300px;gap:28px;align-items:start;padding-top:28px;">
+
+  <!-- ── COL 1: CATEGORY SIDEBAR ── -->
+  <div style="position:sticky;top:calc(var(--nav-height) + 16px);">
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Menu</div>
+      {% for category in menu_categories %}
+      <a href="#cat-{{ category.id }}"
+         onclick="setActiveMenu(this);event.preventDefault();scrollToSection('cat-{{ category.id }}')"
+         class="menu-cat-link"
+         style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">
+        <span>{{ category.name }}</span>
+        <span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:2px 7px;border-radius:10px;">{{ category.item_count }}</span>
+      </a>
+      {% empty %}
+      <a href="#cat-1" class="menu-cat-link" onclick="setActiveMenu(this);event.preventDefault();scrollToSection('cat-1')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;font-weight:600;color:var(--primary);border-bottom:1px solid var(--border);background:var(--primary-light);text-decoration:none;"><span>Bestsellers</span><span style="font-size:11px;background:var(--primary-light);padding:2px 7px;border-radius:10px;">3</span></a>
+      <a href="#cat-2" class="menu-cat-link" onclick="setActiveMenu(this);event.preventDefault();scrollToSection('cat-2')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);text-decoration:none;"><span>Starters</span><span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:2px 7px;border-radius:10px;">3</span></a>
+      <a href="#cat-3" class="menu-cat-link" onclick="setActiveMenu(this);event.preventDefault();scrollToSection('cat-3')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);text-decoration:none;"><span>Main Course</span><span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:2px 7px;border-radius:10px;">3</span></a>
+      <a href="#cat-4" class="menu-cat-link" onclick="setActiveMenu(this);event.preventDefault();scrollToSection('cat-4')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-dark);text-decoration:none;"><span>Desserts</span><span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:2px 7px;border-radius:10px;">3</span></a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── COL 2: MENU ITEMS ── -->
+  <div>
+    <!-- Search + Veg Toggle -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:180px;">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);">🔍</span>
+        <input type="text" placeholder="Search in menu..." oninput="liveSearch(this)"
+               style="width:100%;padding:10px 16px 10px 42px;background:#fff;border:1.5px solid var(--border);border-radius:50px;font-size:14px;font-family:inherit;transition:border-color 0.2s;"
+               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <label id="vegToggleLabel" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 16px;background:#fff;border:1.5px solid var(--border);border-radius:50px;font-size:13px;font-weight:600;color:var(--text-mid);transition:all 0.2s;user-select:none;">
+        <div style="width:32px;height:18px;background:var(--border);border-radius:9px;position:relative;transition:background 0.2s;" id="vegTrack">
+          <div style="width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);" id="vegThumb"></div>
+        </div>
+        <span style="color:var(--success);">💚 Veg Only</span>
+      </label>
+    </div>
+
+    <!-- MENU SECTIONS -->
+    {% for category in menu_categories %}
+    <div id="cat-{{ category.id }}" class="menu-section" style="margin-bottom:40px;">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px;">
+        {{ category.name }}
+        <span style="font-size:12px;font-weight:500;color:var(--text-muted);">{{ category.item_count }} items</span>
+      </h2>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        {% for item in category.items.all %}
+        {% if item.is_available %}
+        <div class="menu-item-card menu-item-wrapper"
+             data-veg="{{ item.is_veg|yesno:'true,false' }}"
+             data-name="{{ item.name|lower }}"
+             style="position:relative;">
+          {% if item.is_bestseller %}
+          <div style="position:absolute;top:-1px;left:-1px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:var(--radius-md) 0 var(--radius-md) 0;letter-spacing:0.3px;">BESTSELLER</div>
+          {% endif %}
+          <div class="item-img" style="flex-shrink:0;">
+            {% if item.image %}
+              <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);">
+            {% else %}
+              <span>{{ item.emoji|default:"🍽️" }}</span>
+            {% endif %}
+          </div>
+          <div class="item-info">
+            <div class="veg-indicator {% if item.is_veg %}veg{% else %}nonveg{% endif %}"><div class="veg-dot"></div>{% if item.is_veg %}Veg{% else %}Non-veg{% endif %}</div>
+            <div class="item-name">{{ item.name }}</div>
+            <div class="item-desc">{{ item.description|default:"Freshly prepared with premium ingredients." }}</div>
+            <div class="item-price">
+              ₹{{ item.price }}
+              {% if item.original_price %}<span>₹{{ item.original_price }}</span>{% endif %}
+            </div>
+          </div>
+          <div style="flex-shrink:0;">
+            <div class="add-btn-wrapper" id="btn-wrapper-{{ item.id }}">
+              <button class="add-btn" data-item-id="{{ item.id }}" data-name="{{ item.name|escapejs }}" data-price="{{ item.price }}"
+                      onclick="handleAdd({{ item.id }},'{{ item.name|escapejs }}',{{ item.price }})">+ Add</button>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% empty %}
+    {% for section_name in demo_sections %}
+    <div id="cat-{{ forloop.counter }}" class="menu-section" style="margin-bottom:40px;">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--border);">{{ section_name }}</h2>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        {% for j in "123"|make_list %}
+        <div class="menu-item-card menu-item-wrapper" data-veg="true" data-name="{{ section_name|lower }} item {{ forloop.counter }}">
+          <div class="item-img"><span>🍛</span></div>
+          <div class="item-info">
+            <div class="veg-indicator veg"><div class="veg-dot"></div>Veg</div>
+            <div class="item-name">{{ section_name }} Item {{ forloop.counter }}</div>
+            <div class="item-desc">Freshly prepared with premium ingredients and authentic spices.</div>
+            <div class="item-price">₹{{ forloop.counter|add:"149" }}</div>
+          </div>
+          <div style="flex-shrink:0;">
+            <div class="add-btn-wrapper" id="btn-wrapper-{{ forloop.parentloop.counter }}{{ forloop.counter }}">
+              <button class="add-btn" data-item-id="{{ forloop.parentloop.counter }}{{ forloop.counter }}"
+                      onclick="handleAdd({{ forloop.parentloop.counter }}{{ forloop.counter }},'{{ section_name }} Item {{ forloop.counter }}',{{ forloop.counter|add:'149' }})">+ Add</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- ── COL 3: CART SUMMARY ── -->
+  <div style="position:sticky;top:calc(var(--nav-height) + 16px);">
+    <div id="cartSummaryBox" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-md);">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:15px;font-weight:700;">🛒 Your Order</div>
+        <span id="cartItemCount" style="font-size:12px;font-weight:600;background:var(--primary);color:#fff;padding:2px 9px;border-radius:50px;display:none;">0</span>
+      </div>
+      <!-- Empty -->
+      <div id="cartEmptyState" style="padding:32px 20px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🛒</div>
+        <p style="font-size:14px;font-weight:600;color:var(--text-dark);margin-bottom:4px;">Cart is empty</p>
+        <p style="font-size:12px;color:var(--text-muted);">Add items to get started</p>
+      </div>
+      <!-- Items -->
+      <div id="cartItemsList" style="display:none;max-height:320px;overflow-y:auto;"></div>
+      <!-- Bill -->
+      <div id="cartBillSection" style="display:none;padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;">
+          <span style="color:var(--text-muted);">Subtotal</span><span id="summarySubtotal" style="font-weight:600;">₹0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;">
+          <span style="color:var(--text-muted);">Delivery</span><span id="summaryDelivery" style="font-weight:600;color:var(--success);">FREE</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;">
+          <span style="color:var(--text-muted);">Platform fee</span><span style="font-weight:600;">₹5</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding-top:10px;border-top:1px solid var(--border);">
+          <span>Total</span><span id="summaryTotal" style="color:var(--primary);">₹0</span>
+        </div>
+      </div>
+      <!-- CTA -->
+      <div id="cartCheckoutBtn" style="padding:14px 18px;display:none;">
+        <a href="{% url 'cart' %}" class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;">
+          Proceed to Cart →
+        </a>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-md);border:1px solid rgba(252,128,25,0.2);display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">⚡</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--primary);">{{ restaurant.delivery_time|default:"30-40" }} min delivery</div>
+        <div style="font-size:11px;color:var(--text-muted);">Free delivery above ₹299</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ CLEAR CART MODAL ═══════════ -->
+<div id="diffRestModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:var(--radius-lg);padding:32px;max-width:380px;width:90%;text-align:center;box-shadow:var(--shadow-lg);">
+    <div style="font-size:48px;margin-bottom:12px;">🛒</div>
+    <h3 style="font-size:18px;font-weight:800;margin-bottom:8px;">Start a new cart?</h3>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:24px;">Your cart has items from another restaurant. Clear it and add this item?</p>
+    <div style="display:flex;gap:12px;">
+      <button onclick="closeDiffRestModal()" class="btn btn-outline" style="flex:1;">Keep existing</button>
+      <button onclick="confirmClearCart()"   class="btn btn-primary" style="flex:1;">Start fresh</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ── IN-PAGE CART STATE ────────────────────────────────────
+const pageCart = {};
+let pendingItem = null;
+
+// ── ADD ITEM ─────────────────────────────────────────────
+function handleAdd(id, name, price) {
+  fetch('/cart/add/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ item_id: id }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      pageCart[id] = pageCart[id]
+        ? { ...pageCart[id], qty: pageCart[id].qty + 1 }
+        : { name, price: parseFloat(price), qty: 1 };
+      renderCartSummary();
+      renderBtn(id);
+      updateBadge(data.cart_count);
+      showToast(`${name} added! 🛒`, 'success');
+    } else if (data.error === 'different_restaurant') {
+      pendingItem = { id, name, price };
+      document.getElementById('diffRestModal').style.display = 'flex';
+    }
+  })
+  .catch(() => showToast('Network error', 'error'));
+}
+
+// ── CHANGE QTY ───────────────────────────────────────────
+function menuChangeQty(id, delta) {
+  fetch('/cart/update/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ item_id: id, delta }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.success) return;
+    if (pageCart[id]) {
+      pageCart[id].qty += delta;
+      if (pageCart[id].qty <= 0) delete pageCart[id];
+    }
+    renderCartSummary();
+    renderBtn(id);
+    updateBadge(data.cart_count);
+  });
+}
+
+// ── RENDER BUTTON ────────────────────────────────────────
+function renderBtn(id) {
+  const wrapper = document.getElementById(`btn-wrapper-${id}`);
+  if (!wrapper) return;
+  const item = pageCart[id];
+  if (item) {
+    wrapper.innerHTML = `
+      <div style="display:flex;align-items:center;border:2px solid var(--primary);border-radius:50px;overflow:hidden;">
+        <button onclick="menuChangeQty(${id},-1)"
+                style="width:34px;height:34px;background:var(--primary);color:#fff;border:none;
+                       font-size:18px;font-weight:700;cursor:pointer;flex-shrink:0;">−</button>
+        <span style="min-width:28px;text-align:center;font-size:15px;font-weight:700;color:var(--primary);padding:0 2px;">${item.qty}</span>
+        <button onclick="menuChangeQty(${id},1)"
+                style="width:34px;height:34px;background:var(--primary);color:#fff;border:none;
+                       font-size:18px;font-weight:700;cursor:pointer;flex-shrink:0;">+</button>
+      </div>`;
+  } else {
+    // Restore original add button — read data from card
+    const card  = wrapper.closest('.menu-item-card');
+    const iname = card ? (card.querySelector('.item-name')?.textContent.trim() || '') : '';
+    const iprice= card ? (parseFloat(card.querySelector('.item-price')?.textContent.replace('₹','')) || 0) : 0;
+    wrapper.innerHTML = `
+      <button class="add-btn" data-item-id="${id}"
+              onclick="handleAdd(${id},'${iname.replace(/'/g,"\\'")}',${iprice})">+ Add</button>`;
+  }
+}
+
+// ── RENDER CART SUMMARY PANEL ─────────────────────────────
+function renderCartSummary() {
+  const keys    = Object.keys(pageCart);
+  const empty   = keys.length === 0;
+  const subtotal= keys.reduce((s,k) => s + pageCart[k].price * pageCart[k].qty, 0);
+  const delivery= subtotal >= 299 ? 0 : 40;
+  const total   = subtotal + delivery + (empty ? 0 : 5);
+  const totalQty= keys.reduce((s,k) => s + pageCart[k].qty, 0);
+
+  document.getElementById('cartEmptyState').style.display  = empty ? 'block' : 'none';
+  document.getElementById('cartItemsList').style.display   = empty ? 'none'  : 'block';
+  document.getElementById('cartBillSection').style.display = empty ? 'none'  : 'block';
+  document.getElementById('cartCheckoutBtn').style.display = empty ? 'none'  : 'block';
+
+  const badge = document.getElementById('cartItemCount');
+  badge.textContent   = totalQty;
+  badge.style.display = empty ? 'none' : 'inline-block';
+
+  if (!empty) {
+    document.getElementById('cartItemsList').innerHTML = keys.map(k => {
+      const it = pageCart[k];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);">₹${it.price}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+          <button onclick="menuChangeQty(${k},-1)" style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:14px;cursor:pointer;">−</button>
+          <span style="font-size:13px;font-weight:700;min-width:14px;text-align:center;">${it.qty}</span>
+          <button onclick="menuChangeQty(${k},1)"  style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:14px;cursor:pointer;">+</button>
+        </div>
+        <div style="font-size:13px;font-weight:700;min-width:40px;text-align:right;">₹${Math.round(it.price*it.qty)}</div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('summarySubtotal').textContent = `₹${Math.round(subtotal)}`;
+    document.getElementById('summaryDelivery').textContent = delivery === 0 ? 'FREE' : `₹${delivery}`;
+    document.getElementById('summaryDelivery').style.color = delivery === 0 ? 'var(--success)' : 'var(--text-dark)';
+    document.getElementById('summaryTotal').textContent    = `₹${Math.round(total)}`;
+  }
+}
+
+// ── CLEAR CART MODAL ─────────────────────────────────────
+function closeDiffRestModal() {
+  document.getElementById('diffRestModal').style.display = 'none';
+  pendingItem = null;
+}
+
+function confirmClearCart() {
+  fetch('/cart/clear/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+  })
+  .then(r => r.json())
+  .then(() => {
+    Object.keys(pageCart).forEach(k => delete pageCart[k]);
+    document.querySelectorAll('.add-btn-wrapper').forEach(w => {
+      const btn = w.querySelector('[data-item-id]');
+      if (btn) renderBtn(btn.dataset.itemId);
+    });
+    renderCartSummary();
+    updateBadge(0);
+    document.getElementById('diffRestModal').style.display = 'none';
+    if (pendingItem) {
+      const p = pendingItem; pendingItem = null;
+      setTimeout(() => handleAdd(p.id, p.name, p.price), 300);
+    }
+  });
+}
+
+// ── VEG TOGGLE ───────────────────────────────────────────
+let vegOnly = false;
+document.getElementById('vegToggleLabel').addEventListener('click', () => {
+  vegOnly = !vegOnly;
+  document.getElementById('vegTrack').style.background = vegOnly ? 'var(--success)' : 'var(--border)';
+  document.getElementById('vegThumb').style.transform  = vegOnly ? 'translateX(14px)' : 'translateX(0)';
+  document.querySelectorAll('.menu-item-wrapper').forEach(c => {
+    c.style.display = (vegOnly && c.dataset.veg !== 'true') ? 'none' : '';
+  });
+});
+
+// ── LIVE SEARCH ──────────────────────────────────────────
+function liveSearch(input) {
+  const q = input.value.toLowerCase();
+  document.querySelectorAll('.menu-item-wrapper').forEach(c => {
+    c.style.display = (c.dataset.name||'').includes(q) ? '' : 'none';
+  });
+}
+
+// ── SIDEBAR ACTIVE ────────────────────────────────────────
+function setActiveMenu(el) {
+  document.querySelectorAll('.menu-cat-link').forEach(a => {
+    a.style.color = 'var(--text-dark)'; a.style.background = ''; a.style.fontWeight = '500';
+  });
+  el.style.color = 'var(--primary)'; el.style.background = 'var(--primary-light)'; el.style.fontWeight = '700';
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 90, behavior: 'smooth' });
+}
+
+window.addEventListener('scroll', () => {
+  document.querySelectorAll('.menu-section').forEach(s => {
+    const r = s.getBoundingClientRect();
+    if (r.top <= 130 && r.bottom >= 130) {
+      const link = document.querySelector(`.menu-cat-link[href="#${s.id}"]`);
+      if (link) setActiveMenu(link);
+    }
+  });
+}, { passive: true });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('.menu-cat-link');
+  if (first) setActiveMenu(first);
+  renderCartSummary();
+});
+</script>
+{% endblock %}

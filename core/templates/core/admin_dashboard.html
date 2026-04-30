@@ -1,0 +1,248 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard — QuickBite{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+
+{% block content %}
+
+<button id="hamburger" onclick="toggleSidebar()" style="position:fixed;top:20px;left:220px;z-index:999;background:none;border:none;cursor:pointer;font-size:22px;color:#fc8019;">☰</button>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease; transform:translateX(0);">
+    <div class="sidebar-brand">
+      <span style="font-size:22px;">🍔</span> QuickBite
+    </div> 
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="#" onclick="showSection('dashboard')" class="nav-item active"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item">
+        <span class="nav-icon">🌐</span><span>View Site</span>
+      </a>
+      <a href="{% url 'logout' %}" class="nav-item">
+        <span class="nav-icon">🚪</span><span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-content">
+
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">Dashboard Overview</h1>
+        <p style="font-size:13px;color:var(--text-muted);">Welcome back, {{ user.username }} 👋</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span style="font-size:13px;color:var(--text-muted);">Today: {% now "d M Y" %}</span>
+        <button class="btn btn-primary btn-sm" onclick="showSection('restaurants')">+ Add Restaurant</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">📦</div>
+        <div><div class="stat-value">{{ total_orders|default:"148" }}</div><div class="stat-label">Total Orders</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">💰</div>
+        <div><div class="stat-value">₹{{ total_revenue|default:"24,680" }}</div><div class="stat-label">Total Revenue</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">🍽️</div>
+        <div><div class="stat-value">{{ total_restaurants|default:"18" }}</div><div class="stat-label">Restaurants</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">👥</div>
+        <div><div class="stat-value">{{ total_users|default:"312" }}</div><div class="stat-label">Registered Users</div></div>
+      </div>
+    </div>
+
+    
+    <!-- ANALYTICS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;">
+      
+      <!-- Line Chart -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:16px;font-weight:700;margin-bottom:20px;">📈 Orders (Last 7 Days)</div>
+        <canvas id="ordersLineChart" height="200"></canvas>
+      </div>
+      
+      <!-- Pie Chart -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:16px;font-weight:700;margin-bottom:20px;">🥧 Order Status Breakdown</div>
+        <canvas id="statusPieChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- RECENT ORDERS TABLE -->
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:24px;">
+      <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:16px;font-weight:700;">📦 Recent Orders</div>
+        <a href="#" style="font-size:13px;font-weight:600;color:var(--primary);">View all</a>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Restaurant</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in recent_orders %}
+            <tr>
+              <td style="font-weight:700;color:var(--primary);">#{{ order.order_id }}</td>
+              <td>{{ order.user }}</td>
+              <td>{{ order.restaurant }}</td>
+              <td style="color:var(--text-muted);">{{ order.item_count }} items</td>
+              <td style="font-weight:700;">₹{{ order.total }}</td>
+              <td><span class="status-badge {{ order.status|lower|slugify }}">{{ order.status }}</span></td>
+              <td>
+                <select onchange="updateOrderStatus({{ order.id }}, this.value)"
+                        style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;">
+                  <option value="pending"    {% if order.status == 'pending'    %}selected{% endif %}>Pending</option>
+                  <option value="confirmed"  {% if order.status == 'confirmed'  %}selected{% endif %}>Confirmed</option>
+                  <option value="preparing"  {% if order.status == 'preparing'  %}selected{% endif %}>Preparing</option>
+<option value="out_for_delivery" {% if order.status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>                  <option value="delivered"  {% if order.status == 'delivered'  %}selected{% endif %}>Delivered</option>
+                  <option value="cancelled"  {% if order.status == 'cancelled'  %}selected{% endif %}>Cancelled</option>
+                </select>
+              </td>
+            </tr>
+            {% empty %}
+            {% for i in "12345678" %}
+            <tr>
+              <td style="font-weight:700;color:var(--primary);">#QB00{{ forloop.counter }}</td>
+              <td>User {{ forloop.counter }}</td>
+              <td>Demo Restaurant</td>
+              <td style="color:var(--text-muted);">3 items</td>
+              <td style="font-weight:700;">₹{{ forloop.counter|add:"299" }}</td>
+              <td><span class="status-badge {% cycle 'confirmed' 'preparing' 'on-the-way' 'delivered' %}">{% cycle "Confirmed" "Preparing" "Out for Delivery" "Delivered" %}</span></td>
+              <td>
+                <select style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;">
+                  <option>Pending</option>
+                  <option>Confirmed</option>
+                  <option>Preparing</option>
+                  <option>Out for Delivery</option>
+                  <option>Delivered</option>
+                  <option>Cancelled</option>
+                </select>
+              </td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function updateOrderStatus(orderId, status) {
+  fetch(`/dashboard/order/${orderId}/status/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ status })
+  }).then(() => showToast('Order status updated!', 'success'));
+}
+
+function confirmDelete(form) {
+  if (confirm('Delete this restaurant? This cannot be undone.')) form.submit();
+}
+
+function toggleSidebar() {
+  localStorage.setItem('sidebarOpen', 'true');
+  const s = document.getElementById('adminSidebar');
+  const h = document.getElementById('hamburger');
+  if (s.style.transform === 'translateX(-100%)') {
+    s.style.transform = 'translateX(0)';
+    h.textContent = '✕';
+    h.style.color = '#fc8019';
+    h.style.left = '220px';
+  } else {
+    s.style.transform = 'translateX(-100%)';
+    h.textContent = '☰';
+    h.style.color = '#ff4444';
+    h.style.left = '16px';
+  }
+}
+
+
+
+window.onload = function() {
+  document.getElementById('adminSidebar').style.transform = 'translateX(0)';
+  document.getElementById('hamburger').style.left = '220px';
+  document.getElementById('hamburger').textContent = '☰';
+  document.getElementById('hamburger').style.color = '#fc8019';
+
+  // Line Chart
+  const lineCtx = document.getElementById('ordersLineChart').getContext('2d');
+  new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels|default:"['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"|safe }},
+      datasets: [{
+        label: 'Orders',
+        data: {{ chart_data|default:"[3,7,5,9,6,12,8]"|safe }},
+        borderColor: '#fc8019',
+        backgroundColor: 'rgba(252,128,25,0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#fc8019',
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+  // Pie Chart
+  const pieCtx = document.getElementById('statusPieChart').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Pending','Confirmed','Preparing','Out for Delivery','Delivered','Cancelled'],
+      datasets: [{
+        data: {{ status_data|default:"[2,5,3,4,20,1]"|safe }},
+        backgroundColor: ['#ff9800','#2196f3','#9c27b0','#00bcd4','#4caf50','#f44336'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } }
+      }
+    }
+  });
+}
+
+</script>
+{% endblock %}

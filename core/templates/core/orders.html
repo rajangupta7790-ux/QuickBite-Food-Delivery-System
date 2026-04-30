@@ -1,0 +1,140 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}My Orders — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width:800px;">
+
+  <h1 style="font-size:26px;font-weight:800;margin-bottom:8px;">📦 My Orders</h1>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:28px;">{{ orders|length }} order(s) placed</p>
+
+  <!-- Filter tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;">
+    <button onclick="filterOrders('all')"       class="order-tab" style="padding:10px 20px;font-size:14px;font-weight:600;background:none;border:none;border-bottom:3px solid var(--primary);color:var(--primary);cursor:pointer;transition:all 0.2s;margin-bottom:-2px;">All</button>
+    <button onclick="filterOrders('active')"    class="order-tab" style="padding:10px 20px;font-size:14px;font-weight:600;background:none;border:none;border-bottom:3px solid transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;margin-bottom:-2px;">Active</button>
+    <button onclick="filterOrders('delivered')" class="order-tab" style="padding:10px 20px;font-size:14px;font-weight:600;background:none;border:none;border-bottom:3px solid transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;margin-bottom:-2px;">Delivered</button>
+    <button onclick="filterOrders('cancelled')" class="order-tab" style="padding:10px 20px;font-size:14px;font-weight:600;background:none;border:none;border-bottom:3px solid transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;margin-bottom:-2px;">Cancelled</button>
+  </div>
+
+  <!-- Order cards -->
+  <div id="ordersContainer" style="display:flex;flex-direction:column;gap:16px;">
+    {% for order in orders %}
+    <div class="order-card" data-status="{{ order.status|lower|slugify }}"
+         style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+
+      <!-- Order header -->
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">🍽️</span>
+          <div>
+            <div style="font-size:16px;font-weight:700;">{{ order.restaurant }}</div>
+            <div style="font-size:12px;color:var(--text-muted);">{{ order.date }} · {{ order.item_count }} items</div>
+          </div>
+        </div>
+        <span class="status-badge {{ order.status|lower|slugify }}">{{ order.status }}</span>
+      </div>
+
+      <!-- Order items preview -->
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text-muted);">
+          {{ order.items_summary|default:"Butter Chicken, Naan, Dal Makhani" }}
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <span style="font-size:16px;font-weight:800;">₹{{ order.total }}</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">· {{ order.payment_method|default:"COD" }}</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <a href="{% url 'order_detail' order.id %}" class="btn btn-outline btn-sm">View Details</a>
+          {% if order.status == "Delivered" %}
+          <button class="btn btn-primary btn-sm" onclick="reorder({{ order.id }})">🔄 Reorder</button>
+          {% endif %}
+          {% if order.status == "Pending" or order.status == "Confirmed" %}
+          <button class="btn btn-sm" style="background:#fce4ec;color:var(--danger);border:none;" onclick="cancelOrder({{ order.id }})">Cancel</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <!-- Demo orders -->
+    {% for i in "123" %}
+    <div class="order-card" data-status="{% cycle 'delivered' 'preparing' 'confirmed' %}"
+         style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">🍽️</span>
+          <div>
+            <div style="font-size:16px;font-weight:700;">Demo Restaurant {{ forloop.counter }}</div>
+            <div style="font-size:12px;color:var(--text-muted);">2 days ago · 3 items</div>
+          </div>
+        </div>
+        <span class="status-badge {% cycle 'delivered' 'preparing' 'confirmed' %}">{% cycle "Delivered" "Preparing" "Confirmed" %}</span>
+      </div>
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text-muted);">Butter Chicken, Garlic Naan, Raita</div>
+      </div>
+      <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:16px;font-weight:800;">₹{{ forloop.counter|add:"299" }}</span>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-outline btn-sm">View Details</button>
+          <button class="btn btn-primary btn-sm">🔄 Reorder</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- Empty state -->
+  <div id="noOrdersMsg" class="empty-state" style="display:none;background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow-sm);">
+    <div class="empty-emoji">📦</div>
+    <h3>No orders found</h3>
+    <p>No orders in this category</p>
+    <a href="{% url 'restaurants' %}" class="btn btn-primary">Order Now</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterOrders(status) {
+  document.querySelectorAll('.order-tab').forEach(t => {
+    const active = t.textContent.trim().toLowerCase() === status;
+    t.style.borderBottomColor = active ? 'var(--primary)' : 'transparent';
+    t.style.color = active ? 'var(--primary)' : 'var(--text-muted)';
+  });
+  let visible = 0;
+  document.querySelectorAll('.order-card').forEach(card => {
+    const s = card.dataset.status;
+    const show = status === 'all' || s === status ||
+                 (status === 'active' && ['confirmed','preparing','out-for-delivery','out_for_delivery'].includes(s));
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('noOrdersMsg').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function cancelOrder(id) {
+  if (!confirm('Cancel this order?')) return;
+  fetch(`/orders/${id}/cancel/`, { method:'POST', headers:{'X-CSRFToken':getCookie('csrftoken')} })
+    .then(() => { showToast('Order cancelled', 'error'); location.reload(); });
+}
+
+function reorder(id) {
+  fetch(`/orders/${id}/reorder/`, { method:'POST', headers:{'X-CSRFToken':getCookie('csrftoken')} })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        updateBadge(data.cart_count);
+        showToast('Items added to cart! 🛒', 'success');
+        toggleCart();
+      }
+    });
+}
+</script>
+{% endblock %}

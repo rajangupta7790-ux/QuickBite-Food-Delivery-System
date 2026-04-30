@@ -1,0 +1,69 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}Coupons — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand"><span style="font-size:22px;">🍔</span> QuickBite</div>
+    <div style="padding:0 12px;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item active"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">🏷️ Coupons</h1>
+        <p style="font-size:13px;color:var(--text-muted);">Active discount codes</p>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Discount Type</th>
+            <th>Min Order</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for coupon in coupons %}
+          <tr>
+            <td>
+              <span style="font-family:monospace;font-size:15px;font-weight:800;color:var(--primary);background:var(--primary-light);padding:4px 12px;border-radius:6px;">
+                {{ coupon.code }}
+              </span>
+            </td>
+            <td style="font-weight:600;">{{ coupon.type }}</td>
+            <td style="color:var(--text-muted);">{% if coupon.min_order %}₹{{ coupon.min_order }}{% else %}No minimum{% endif %}</td>
+            <td>
+              {% if coupon.active %}
+                <span class="status-badge confirmed">Active</span>
+              {% else %}
+                <span class="status-badge cancelled">Inactive</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    </div>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "core/base.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+{% block title %}Restaurants — Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar" style="transition:transform 0.2s ease;transform:translateX(0);">
+    <div class="sidebar-brand">
+      <span style="font-size:22px;">🍔</span> QuickBite
+    </div>
+    <div style="padding:0 12px;">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin-bottom:8px;">Main</div>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+      <a href="{% url 'admin_restaurants' %}" class="nav-item active"><span class="nav-icon">🍽️</span><span>Restaurants</span></a>
+      <a href="{% url 'admin_select_restaurant' %}" class="nav-item"><span class="nav-icon">🍛</span><span>Menu Items</span></a>
+      <a href="{% url 'admin_orders' %}" class="nav-item"><span class="nav-icon">📦</span><span>Orders</span></a>
+      <a href="{% url 'admin_users' %}" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+      <a href="{% url 'admin_coupons' %}" class="nav-item"><span class="nav-icon">🏷️</span><span>Coupons</span></a>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;padding:0 12px;margin:16px 0 8px;">System</div>
+      <a href="{% url 'home' %}" class="nav-item"><span class="nav-icon">🌐</span><span>View Site</span></a>
+      <a href="{% url 'logout' %}" class="nav-item"><span class="nav-icon">🚪</span><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">🍽️ Restaurants</h1>
+        <p style="font-size:13px;color:var(--text-muted);">{{ restaurants|length }} restaurants total</p>
+      </div>
+      <a href="{% url 'admin_add_restaurant' %}" class="btn btn-primary btn-sm">+ Add New</a>
+    </div>
+
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Cuisine</th>
+            <th>Rating</th>
+            <th>Total Orders</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in restaurants %}
+          <tr>
+            <td style="font-weight:600;">{{ r.emoji }} {{ r.name }}</td>
+            <td style="color:var(--text-muted);">{{ r.cuisine }}</td>
+            <td><span class="rating-badge">⭐ {{ r.rating }}</span></td>
+            <td>{{ r.orders.count }}</td>
+            <td>
+              <span class="status-badge {% if r.is_active %}confirmed{% else %}cancelled{% endif %}">
+                {% if r.is_active %}Active{% else %}Inactive{% endif %}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <a href="{% url 'admin_menu_items' restaurant_pk=r.id %}" class="btn btn-outline btn-sm">Menu</a>
+                <a href="{% url 'admin_edit_restaurant' r.id %}" class="btn btn-outline btn-sm">Edit</a>
+                <form method="post" action="{% url 'admin_delete_restaurant' r.id %}" style="margin:0;">
+                  {% csrf_token %}
+                  <button type="button" onclick="confirmDelete(this.form)" class="btn btn-sm" style="background:#fce4ec;color:var(--danger);border:none;">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No restaurants found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(form) {
+  if (confirm('Delete this restaurant? This cannot be undone.')) form.submit();
+}
+</script>
+{% endblock %}

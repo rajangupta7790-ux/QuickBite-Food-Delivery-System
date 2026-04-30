@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}QuickBite — Food Delivery{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  {% block navbar %}
+  <nav class="navbar">
+    <div class="navbar-inner">
+
+      <!-- Brand -->
+      <a href="{% url 'home' %}" class="navbar-brand">
+        <div class="brand-icon">🍔</div>
+        QuickBite
+      </a>
+
+      <!-- Location -->
+      <div class="navbar-location">
+        <span class="loc-icon">📍</span>
+        <span class="loc-city">Mumbai</span>
+        <span class="loc-arrow">▼</span>
+      </div>
+
+      <!-- Search -->
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search for restaurants or dishes..."
+               onkeydown="if(event.key==='Enter') window.location.href='{% url 'restaurants' %}?q='+this.value">
+      </div>
+
+      <!-- Actions -->
+      <div class="navbar-actions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'orders' %}" class="nav-btn nav-btn-ghost">📦 Orders</a>
+          <button class="nav-btn nav-btn-ghost cart-btn" onclick="toggleCart()">
+            🛒 Cart
+            <span class="cart-badge" id="cart-count">0</span>
+          </button>
+          <a href="{% url 'profile' %}" class="nav-btn nav-btn-ghost">👤 {{ user.first_name|default:user.username }}</a>
+          <a href="{% url 'logout' %}" class="nav-btn nav-btn-ghost">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="nav-btn nav-btn-ghost">Sign in</a>
+          <a href="{% url 'register' %}" class="nav-btn nav-btn-primary">Sign up</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </nav>
+  {% endblock %}
+
+  <!-- ===== MESSAGES / ALERTS ===== -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast {% if message.tags %}{{ message.tags }}{% endif %} show" id="django-toast">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ===== CART SIDEBAR ===== -->
+  {% block cart_sidebar %}
+  <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h3>🛒 Your Cart</h3>
+      <button class="cart-close" onclick="toggleCart()">✕</button>
+    </div>
+    <div class="cart-body" id="cartBody">
+      <div class="empty-state">
+        <div class="empty-emoji">🛒</div>
+        <h3>Your cart is empty</h3>
+        <p>Add items from a restaurant to get started</p>
+      </div>
+    </div>
+    <div class="cart-footer" id="cartFooter" style="display:none">
+      <div class="cart-total">
+        <span>Total</span>
+        <span id="cartTotal">₹0</span>
+      </div>
+      <a href="{% url 'checkout' %}" class="btn btn-primary" style="width:100%;justify-content:center;">
+        Proceed to Checkout →
+      </a>
+    </div>
+  </div>
+  {% endblock %}
+
+  <!-- ===== FOOTER ===== -->
+  {% block footer %}
+  <footer class="footer">
+    <div class="footer-inner">
+
+      <div class="footer-top" style="grid-template-columns:2fr 1fr 1fr 1fr;">
+
+        <!-- Brand + Social -->
+        <div class="footer-brand">
+          <div class="brand-name">🍔 QuickBite</div>
+          <p>Your favourite food, delivered fast.<br>Demo project for educational purposes.</p>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <a href="#" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);
+                               display:flex;align-items:center;justify-content:center;font-size:15px;
+                               text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='var(--primary)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.1)'">📘</a>
+            <a href="#" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);
+                               display:flex;align-items:center;justify-content:center;font-size:15px;
+                               text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='var(--primary)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.1)'">📸</a>
+            <a href="#" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);
+                               display:flex;align-items:center;justify-content:center;font-size:15px;
+                               text-decoration:none;transition:background 0.2s;"
+               onmouseover="this.style.background='var(--primary)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.1)'">🐦</a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'restaurants' %}">Restaurants</a></li>
+            <li><a href="{% url 'orders' %}">My Orders</a></li>
+            <li><a href="{% url 'profile' %}">My Profile</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div class="footer-col">
+          <h4>Contact Us</h4>
+          <ul>
+            <li><a href="mailto:support@quickbite.demo">📧 support@quickbite.demo</a></li>
+            <li><a href="tel:+911234567890">📞 +91 12345 67890</a></li>
+            <li><a href="#">📍 Mumbai, Maharashtra</a></li>
+            <li><a href="#">💬 Live Chat</a></li>
+          </ul>
+        </div>
+
+        <!-- About -->
+        <div class="footer-col">
+          <h4>About</h4>
+          <ul>
+            <li><a href="#">About QuickBite</a></li>
+            <li><a href="#">How it Works</a></li>
+            <li><a href="#">Partner with Us</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2024 QuickBite. Demo project only.</span>
+        <span style="display:flex;align-items:center;gap:16px;">
+          <a href="#" style="color:rgba(255,255,255,0.4);font-size:13px;">Terms</a>
+          <a href="#" style="color:rgba(255,255,255,0.4);font-size:13px;">Privacy</a>
+          <span>Made with ❤️ for learning</span>
+        </span>
+      </div>
+
+    </div>
+  </footer>
+  {% endblock %}
+
+  <!-- ===== CUSTOM MODAL ===== -->
+  <div id="customModal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);" onclick="closeModal()"></div>
+    <div id="modalBox" style="position:relative;background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:modalPop 0.2s ease;">
+      <div id="modalIcon" style="font-size:48px;text-align:center;margin-bottom:16px;"></div>
+      <h3 id="modalTitle" style="font-size:18px;font-weight:800;text-align:center;margin-bottom:8px;color:#1a1a2e;"></h3>
+      <p id="modalMsg" style="font-size:14px;color:#64748b;text-align:center;margin-bottom:24px;line-height:1.6;"></p>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button onclick="closeModal()" style="padding:10px 24px;border:1.5px solid #e2e8f0;border-radius:50px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:#64748b;">Cancel</button>
+        <button id="modalConfirmBtn" style="padding:10px 24px;border:none;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;color:#fff;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CUSTOM TOAST ===== -->
+  <div id="customToast" style="display:none;position:fixed;bottom:28px;right:28px;z-index:99999;padding:14px 22px;border-radius:50px;font-size:14px;font-weight:600;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.15);animation:slideUp 0.3s ease;">
+  </div>
+
+  <style>
+    @keyframes modalPop { from{transform:scale(0.85);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes slideUp  { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  </style>
+
+  <!-- ===== MAIN JS ===== -->
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

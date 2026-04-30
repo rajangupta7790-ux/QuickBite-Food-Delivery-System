@@ -1,0 +1,169 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Order #{{ order.order_id }} — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width:760px;">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+    <a href="{% url 'orders' %}"
+       style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--border);
+              display:flex;align-items:center;justify-content:center;font-size:16px;
+              text-decoration:none;color:var(--text-muted);">←</a>
+    <div>
+      <h1 style="font-size:22px;font-weight:800;margin-bottom:2px;">Order #{{ order.order_id }}</h1>
+      <p style="font-size:13px;color:var(--text-muted);">
+        Placed on {{ order.created_at|date:"d M Y, h:i A" }}
+      </p>
+    </div>
+    <span class="status-badge {{ order.status }}" style="margin-left:auto;">
+      {{ order.get_status_display }}
+    </span>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- ORDER TRACKER -->
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow-sm);">
+      <div style="font-size:15px;font-weight:700;margin-bottom:20px;">📍 Order Status</div>
+      <div style="position:relative;">
+        <!-- Background line -->
+        <div style="position:absolute;top:16px;left:16px;right:16px;height:3px;background:var(--border);z-index:0;"></div>
+        <!-- Active line -->
+        <div style="position:absolute;top:16px;left:16px;height:3px;background:var(--primary);z-index:1;
+                    width:{% if order.status == 'pending' %}0%{% elif order.status == 'confirmed' %}25%{% elif order.status == 'preparing' %}50%{% elif order.status == 'out_for_delivery' %}75%{% else %}100%{% endif %};
+                    transition:width 1s ease;"></div>
+
+        <div style="display:flex;justify-content:space-between;position:relative;z-index:2;">
+          <!-- Placed -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid var(--primary);background:var(--primary);">✅</div>
+            <div style="font-size:11px;font-weight:700;color:var(--primary);text-align:center;">Placed</div>
+          </div>
+          <!-- Confirmed -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid {% if order.status == 'confirmed' or order.status == 'preparing' or order.status == 'out_for_delivery' or order.status == 'delivered' %}var(--primary){% else %}var(--border){% endif %};background:{% if order.status == 'confirmed' or order.status == 'preparing' or order.status == 'out_for_delivery' or order.status == 'delivered' %}var(--primary){% else %}#fff{% endif %};">🍳</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Confirmed</div>
+          </div>
+          <!-- Preparing -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid {% if order.status == 'preparing' or order.status == 'out_for_delivery' or order.status == 'delivered' %}var(--primary){% else %}var(--border){% endif %};background:{% if order.status == 'preparing' or order.status == 'out_for_delivery' or order.status == 'delivered' %}var(--primary){% else %}#fff{% endif %};">👨‍🍳</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Preparing</div>
+          </div>
+          <!-- On the Way -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid {% if order.status == 'out_for_delivery' or order.status == 'delivered' %}var(--primary){% else %}var(--border){% endif %};background:{% if order.status == 'out_for_delivery' or order.status == 'delivered' %}var(--primary){% else %}#fff{% endif %};">🛵</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">On the Way</div>
+          </div>
+          <!-- Delivered -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;">
+            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid {% if order.status == 'delivered' %}var(--primary){% else %}var(--border){% endif %};background:{% if order.status == 'delivered' %}var(--primary){% else %}#fff{% endif %};">🎉</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-align:center;">Delivered</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESTAURANT + ORDER INFO -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Restaurant</div>
+        <div style="font-size:15px;font-weight:700;">{{ order.restaurant.name }}</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">{{ order.restaurant.cuisine }}</div>
+      </div>
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Payment</div>
+        <div style="font-size:15px;font-weight:700;">{{ order.get_payment_method_display }}</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">{{ order.created_at|date:"d M Y" }}</div>
+      </div>
+    </div>
+
+    <!-- ORDERED ITEMS -->
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;">🍽️ Ordered Items</div>
+      </div>
+      {% for item in order.items.all %}
+      <div style="display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;
+                    display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+          🍛
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">{{ item.name }}</div>
+          <div style="font-size:13px;color:var(--text-muted);">₹{{ item.price }} × {{ item.quantity }}</div>
+        </div>
+        <div style="font-size:15px;font-weight:700;">₹{{ item.total }}</div>
+      </div>
+      {% endfor %}
+
+      <!-- Bill breakdown -->
+      <div style="padding:16px 20px;background:var(--bg);">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+          <span style="color:var(--text-muted);">Subtotal</span>
+          <span style="font-weight:600;">₹{{ order.subtotal }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+          <span style="color:var(--text-muted);">Delivery Fee</span>
+          <span style="font-weight:600;color:{% if order.delivery_fee == 0 %}var(--success){% else %}var(--text-dark){% endif %};">
+            {% if order.delivery_fee == 0 %}FREE{% else %}₹{{ order.delivery_fee }}{% endif %}
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+          <span style="color:var(--text-muted);">Platform Fee</span>
+          <span style="font-weight:600;">₹{{ order.platform_fee }}</span>
+        </div>
+        {% if order.discount %}
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+          <span style="color:var(--success);">Discount</span>
+          <span style="font-weight:600;color:var(--success);">− ₹{{ order.discount }}</span>
+        </div>
+        {% endif %}
+        <div style="border-top:1.5px dashed var(--border);padding-top:12px;margin-top:4px;
+                    display:flex;justify-content:space-between;font-size:16px;font-weight:800;">
+          <span>Total Paid</span>
+          <span style="color:var(--primary);">₹{{ order.total }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELIVERY ADDRESS -->
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;">📍 Delivered To</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;">{{ order.full_name }}</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+        {{ order.address }},<br>
+        {{ order.city }} — {{ order.pincode }}
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:6px;">📞 {{ order.phone }}</div>
+    </div>
+
+    {% if order.instructions %}
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px;">📝 Instructions</div>
+      <div style="font-size:14px;color:var(--text-muted);">{{ order.instructions }}</div>
+    </div>
+    {% endif %}
+
+    <!-- ACTION BUTTONS -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      {% if order.status == 'pending' or order.status == 'confirmed' %}
+      <form method="post" action="{% url 'cancel_order' order.pk %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="button" onclick="confirmDelete(this.form)"
+                class="btn btn-outline" style="color:var(--danger);border-color:var(--danger);">
+          Cancel Order
+        </button>
+      </form>
+      {% endif %}
+      {% if order.status == 'delivered' %}
+      <a href="{% url 'restaurant_menu' order.restaurant.pk %}" class="btn btn-primary">🔄 Reorder</a>
+      {% endif %}
+      <a href="{% url 'orders' %}" class="btn btn-outline">← Back to Orders</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

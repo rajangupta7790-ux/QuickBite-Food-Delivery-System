@@ -1,0 +1,147 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Create Account — QuickBite{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block cart_sidebar %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="padding:32px 24px;">
+  <div class="auth-card" style="max-width:480px;">
+
+    <div class="auth-logo">
+      <span class="logo-icon">🍔</span>
+      <h2>Create Account</h2>
+      <p>Join QuickBite and start ordering</p>
+    </div>
+
+    {% if form.errors %}
+    <div style="background:#fce4ec;border:1px solid #f8bbd0;border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--danger);">
+      ⚠️ Please fix the errors below.
+    </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">First Name *</label>
+          <input type="text" name="first_name" class="form-control" placeholder="First name" required
+                 value="{{ form.first_name.value|default:'' }}">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control" placeholder="Last name"
+                 value="{{ form.last_name.value|default:'' }}">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:14px;">
+        <label class="form-label">Username *</label>
+        <input type="text" name="username" class="form-control" placeholder="Choose a username" required
+               value="{{ form.username.value|default:'' }}"
+               oninput="checkUsername(this.value)">
+        <div id="usernameMsg" style="font-size:12px;margin-top:6px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address *</label>
+        <input type="email" name="email" class="form-control" placeholder="your@email.com" required
+               value="{{ form.email.value|default:'' }}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input type="tel" name="phone" class="form-control" placeholder="10-digit mobile number"
+               value="{{ form.phone.value|default:'' }}">
+      </div>
+
+      <div class="form-group" style="position:relative;">
+        <label class="form-label">Password *</label>
+        <input type="password" name="password1" id="pwd1" class="form-control"
+               placeholder="Min. 8 characters" required oninput="checkPwdStrength(this.value)">
+        <button type="button" onclick="togglePwd('pwd1')" style="position:absolute;right:14px;top:34px;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted);">👁</button>
+        <!-- Strength bar -->
+        <div style="height:4px;background:var(--border);border-radius:4px;margin-top:8px;overflow:hidden;">
+          <div id="strengthBar" style="height:100%;width:0;border-radius:4px;transition:all 0.3s;"></div>
+        </div>
+        <div id="strengthText" style="font-size:11px;color:var(--text-muted);margin-top:4px;"></div>
+      </div>
+
+      <div class="form-group" style="position:relative;">
+        <label class="form-label">Confirm Password *</label>
+        <input type="password" name="password2" id="pwd2" class="form-control"
+               placeholder="Re-enter password" required oninput="checkMatch()">
+        <button type="button" onclick="togglePwd('pwd2')" style="position:absolute;right:14px;top:34px;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted);">👁</button>
+        <div id="matchMsg" style="font-size:12px;margin-top:6px;"></div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-mid);cursor:pointer;line-height:1.5;">
+          <input type="checkbox" name="agree" required style="margin-top:2px;accent-color:var(--primary);flex-shrink:0;">
+          I agree to the <a href="#" style="color:var(--primary);font-weight:600;">Terms of Service</a> and <a href="#" style="color:var(--primary);font-weight:600;">Privacy Policy</a>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;padding:13px;">
+        Create Account 🎉
+      </button>
+    </form>
+
+    <div style="text-align:center;margin-top:24px;font-size:14px;color:var(--text-muted);">
+      Already have an account?
+      <a href="{% url 'login' %}" style="color:var(--primary);font-weight:700;margin-left:4px;">Sign in</a>
+    </div>
+
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function togglePwd(id) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function checkPwdStrength(val) {
+  const bar  = document.getElementById('strengthBar');
+  const text = document.getElementById('strengthText');
+  let score = 0;
+  if (val.length >= 8)  score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { w:'25%', c:'var(--danger)',  t:'Weak' },
+    { w:'50%', c:'#ff9800',       t:'Fair' },
+    { w:'75%', c:'var(--primary)',t:'Good' },
+    { w:'100%',c:'var(--success)',t:'Strong' },
+  ];
+  if (val.length === 0) { bar.style.width='0'; text.textContent=''; return; }
+  const lvl = levels[score - 1] || levels[0];
+  bar.style.width       = lvl.w;
+  bar.style.background  = lvl.c;
+  text.textContent      = lvl.t;
+  text.style.color      = lvl.c;
+}
+
+function checkMatch() {
+  const msg = document.getElementById('matchMsg');
+  const p1  = document.getElementById('pwd1').value;
+  const p2  = document.getElementById('pwd2').value;
+  if (!p2) { msg.textContent=''; return; }
+  if (p1 === p2) { msg.textContent='✅ Passwords match'; msg.style.color='var(--success)'; }
+  else           { msg.textContent='❌ Passwords do not match'; msg.style.color='var(--danger)'; }
+}
+
+function checkUsername(val) {
+  const msg = document.getElementById('usernameMsg');
+  if (val.length < 3) { msg.textContent='Minimum 3 characters'; msg.style.color='var(--text-muted)'; return; }
+  if (/^[a-zA-Z0-9_]+$/.test(val)) { msg.textContent='✅ Username looks good'; msg.style.color='var(--success)'; }
+  else { msg.textContent='Only letters, numbers, underscores allowed'; msg.style.color='var(--danger)'; }
+}
+</script>
+{% endblock %}
+{% endblock %}

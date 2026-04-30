@@ -1,0 +1,448 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}My Profile — QuickBite{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width:960px;">
+
+  <div style="display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:start;">
+
+    <!-- PROFILE SIDEBAR -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Avatar card -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:28px 20px;text-align:center;box-shadow:var(--shadow-sm);">
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#ff6b35);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;color:#fff;font-weight:800;">
+          {{ user.first_name|first|upper|default:"U" }}
+        </div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px;">{{ user.get_full_name|default:user.username }}</div>
+        <div style="font-size:13px;color:var(--text-muted);">{{ user.email }}</div>
+        <div style="margin-top:12px;padding:6px 16px;background:var(--primary-light);border-radius:50px;display:inline-block;font-size:12px;font-weight:600;color:var(--primary);">
+          🍔 QuickBite Member
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:20px;box-shadow:var(--shadow-sm);">
+        <div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;">My Stats</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;color:var(--text-muted);">Total Orders</span>
+          <span style="font-size:14px;font-weight:700;">{{ total_orders|default:"12" }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;color:var(--text-muted);">Restaurants Tried</span>
+          <span style="font-size:14px;font-weight:700;">{{ unique_restaurants|default:"5" }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;color:var(--text-muted);">Favourite Item</span>
+          <span style="font-size:14px;font-weight:700;">{{ fav_item|default:"Butter Chicken" }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+          <span style="font-size:13px;color:var(--text-muted);">Savings</span>
+          <span style="font-size:14px;font-weight:700;">₹{{ total_savings|default:"240" }}</span>
+        </div>
+      </div>
+
+      <!-- Sidebar nav -->
+      <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+        <a href="#" onclick="showTab('edit-profile')" class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">👤 Edit Profile</a>
+        <a href="#" onclick="showTab('my-orders')"    class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">📦 My Orders</a>
+        <a href="#" onclick="showTab('addresses')"    class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">📍 Addresses</a>
+        <a href="#" onclick="showTab('payment')"      class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">💳 Payment Methods</a>
+        <a href="#" onclick="showTab('notifications')" class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">🔔 Notifications</a>
+        <a href="#" onclick="showTab('coupons')" class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--text-dark);border-bottom:1px solid var(--border);transition:all 0.2s;text-decoration:none;">🏷️ My Coupons</a>
+        <a href="{% url 'logout' %}" class="profile-nav-item" style="display:flex;align-items:center;gap:10px;padding:13px 18px;font-size:14px;font-weight:500;color:var(--danger);transition:all 0.2s;text-decoration:none;">🚪 Logout</a>
+      </div>
+
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div>
+
+      <!-- EDIT PROFILE TAB -->
+      <div id="tab-edit-profile" class="profile-tab" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm);">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--border);">
+          <div style="font-size:17px;font-weight:700;">👤 Edit Profile</div>
+        </div>
+        <form method="post" action="{% url 'update_profile' %}" style="padding:24px;">
+          {% csrf_token %}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">First Name</label>
+              <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:16px;">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ user.email }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" name="phone" class="form-control" value="{{ user.profile.phone|default:'' }}" placeholder="10-digit number">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="dob" class="form-control" value="{{ user.profile.dob|default:'' }}">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+
+
+      <!-- ADDRESSES TAB -->
+<div id="tab-addresses" class="profile-tab" style="display:none;">
+  <div style="font-size:17px;font-weight:700;margin-bottom:20px;">📍 Saved Addresses</div>
+  
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    {% for address in addresses %}
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:700;">{{ address.get_label_display }}</div>
+        {% if address.is_default %}<span style="background:var(--primary-light);color:var(--primary);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">Default</span>{% endif %}
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">{{ address.address }}, {{ address.city }} - {{ address.pincode }}</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">📞 {{ address.phone }}</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="editAddress({{ address.id }},'{{ address.label }}','{{ address.address }}','{{ address.city }}','{{ address.pincode }}','{{ address.phone }}')" class="btn btn-outline btn-sm">Edit</button>
+        <button onclick="deleteAddress({{ address.id }})" class="btn btn-sm" style="background:#fce4ec;color:#e74c3c;border:none;">Delete</button>
+      </div>
+    </div>
+    {% empty %}
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:30px;text-align:center;color:var(--text-muted);">
+      No addresses saved yet. <button onclick="showAddAddressModal()" style="color:var(--primary);font-weight:600;border:none;background:none;cursor:pointer;">Add one</button>
+    </div>
+    {% endfor %}
+  </div>
+  
+  <button onclick="showAddAddressModal()" style="margin-top:16px;background:#fff;border:2px dashed var(--primary);padding:16px 20px;border-radius:var(--radius-md);color:var(--primary);font-weight:600;cursor:pointer;font-size:14px;width:100%;">+ Add New Address</button>
+</div>
+
+<!-- PAYMENT METHODS TAB -->
+<div id="tab-payment" class="profile-tab" style="display:none;">
+  <div style="font-size:17px;font-weight:700;margin-bottom:20px;">💳 Payment Methods</div>
+  
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    {% for payment in payments %}
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow-sm);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:700;">{{ payment.get_card_type_display }} • {{ payment.last_4_digits }}</div>
+        {% if payment.is_default %}<span style="background:var(--primary-light);color:var(--primary);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">Default</span>{% endif %}
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">{{ payment.cardholder_name }}</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="editPayment({{ payment.id }},'{{ payment.cardholder_name }}')" class="btn btn-outline btn-sm">Edit</button>
+        <button onclick="deletePayment({{ payment.id }})" class="btn btn-sm" style="background:#fce4ec;color:#e74c3c;border:none;">Delete</button>
+      </div>
+    </div>
+    {% empty %}
+    <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:30px;text-align:center;color:var(--text-muted);">
+      No payment methods saved yet. <button onclick="showAddPaymentModal()" style="color:var(--primary);font-weight:600;border:none;background:none;cursor:pointer;">Add one</button>
+    </div>
+    {% endfor %}
+  </div>
+  
+  <button onclick="showAddPaymentModal()" style="margin-top:16px;background:#fff;border:2px dashed var(--primary);padding:16px 20px;border-radius:var(--radius-md);color:var(--primary);font-weight:600;cursor:pointer;font-size:14px;width:100%;">+ Add Payment Method</button>
+</div>
+
+<!-- NOTIFICATIONS TAB -->
+<div id="tab-notifications" class="profile-tab" style="display:none;">
+  <div style="font-size:17px;font-weight:700;margin-bottom:20px;">🔔 Notification Preferences</div>
+  
+  <form method="post" action="{% url 'save_notifications' %}" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:20px;box-shadow:var(--shadow-sm);">
+    {% csrf_token %}
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+        <input type="checkbox" name="order_updates" {% if notification_preference.order_updates %}checked{% endif %} style="accent-color:var(--primary);width:18px;height:18px;">
+        <div>
+          <div style="font-weight:600;font-size:14px;">Order Updates</div>
+          <div style="font-size:12px;color:var(--text-muted);">Get notified about order status</div>
+        </div>
+      </label>
+      
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+        <input type="checkbox" name="promotions" {% if notification_preference.promotions %}checked{% endif %} style="accent-color:var(--primary);width:18px;height:18px;">
+        <div>
+          <div style="font-weight:600;font-size:14px;">Promotions & Offers</div>
+          <div style="font-size:12px;color:var(--text-muted);">New deals and discounts</div>
+        </div>
+      </label>
+      
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+        <input type="checkbox" name="reviews" {% if notification_preference.reviews %}checked{% endif %} style="accent-color:var(--primary);width:18px;height:18px;">
+        <div>
+          <div style="font-weight:600;font-size:14px;">Reviews & Ratings</div>
+          <div style="font-size:12px;color:var(--text-muted);">Remind to rate restaurants</div>
+        </div>
+      </label>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center;">Save Preferences</button>
+  </form>
+</div>
+
+      <!-- ORDERS TAB -->
+      <div id="tab-my-orders" class="profile-tab" style="display:none;">
+        <div style="font-size:17px;font-weight:700;margin-bottom:20px;">📦 My Orders</div>
+        {% for order in recent_orders %}
+        <div style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow-sm);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div>
+              <div style="font-size:15px;font-weight:700;">{{ order.restaurant }}</div>
+              <div style="font-size:12px;color:var(--text-muted);">{{ order.date }} · {{ order.item_count }} items</div>
+            </div>
+            <span class="status-badge {{ order.status|lower|slugify }}">{{ order.status }}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:14px;font-weight:700;">₹{{ order.total }}</span>
+            <div style="display:flex;gap:10px;">
+              <a href="{% url 'order_detail' order.id %}" class="btn btn-outline btn-sm">View</a>
+              {% if order.can_reorder %}<button class="btn btn-primary btn-sm">Reorder</button>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow-sm);">
+          <div class="empty-emoji">📦</div>
+          <h3>No orders yet!</h3>
+          <p>Start exploring restaurants and place your first order</p>
+          <a href="{% url 'restaurants' %}" class="btn btn-primary">Browse Restaurants</a>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- COUPONS TAB -->
+      <div id="tab-coupons" class="profile-tab" style="display:none;">
+        <div style="font-size:17px;font-weight:700;margin-bottom:20px;">🏷️ My Coupons</div>
+
+        {% if request.session.welcome_coupon %}
+        <div style="background:linear-gradient(135deg,#fc8019,#ff6b35);border-radius:var(--radius-md);padding:20px 24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(252,128,25,0.25);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;">🎁</span>
+              <div>
+                <div style="font-size:15px;font-weight:800;color:#fff;">{{ request.session.welcome_coupon.desc }}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:2px;">Expires in 24 hours of signup</div>
+              </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.2);padding:8px 18px;border-radius:50px;font-size:15px;font-weight:800;color:#fff;letter-spacing:1.5px;">
+              {{ request.session.welcome_coupon.code }}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Static coupons -->
+        {% for coupon in available_coupons %}
+        <div style="background:#fff;border-radius:var(--radius-md);border:1.5px dashed var(--primary);padding:18px 22px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">{{ coupon.desc }}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">{% if coupon.min_order %}Min order ₹{{ coupon.min_order }}{% else %}No minimum order{% endif %}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:monospace;font-size:14px;font-weight:800;color:var(--primary);background:var(--primary-light);padding:6px 14px;border-radius:8px;">{{ coupon.code }}</span>
+            <button onclick="copyCode('{{ coupon.code }}')" style="background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Copy</button>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(tabName) {
+  document.querySelectorAll('.profile-tab').forEach(t => t.style.display = 'none');
+  const tab = document.getElementById('tab-' + tabName);
+  if (tab) tab.style.display = 'block';
+}
+
+function showAddAddressModal() {
+  const modal = document.getElementById('customModal');
+  document.getElementById('modalIcon').textContent = '📍';
+  document.getElementById('modalTitle').textContent = 'Add Address';
+  document.getElementById('modalMsg').innerHTML = `
+    <form id="addressForm" style="text-align:left;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Label</label>
+        <select id="addr_label" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;">
+          <option value="Home">Home</option>
+          <option value="Work">Work</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Address</label>
+        <input id="addr_address" type="text" placeholder="Full address" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">City</label>
+          <input id="addr_city" type="text" placeholder="City" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Pincode</label>
+          <input id="addr_pincode" type="text" placeholder="Pincode" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Phone</label>
+        <input id="addr_phone" type="tel" placeholder="10-digit phone" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+      </div>
+    </form>
+  `;
+  
+  const btn = document.getElementById('modalConfirmBtn');
+  btn.textContent = 'Add Address';
+  btn.style.background = 'var(--primary)';
+  btn.onclick = () => {
+    const formData = new FormData();
+    formData.append('label', document.getElementById('addr_label').value);
+    formData.append('address', document.getElementById('addr_address').value);
+    formData.append('city', document.getElementById('addr_city').value);
+    formData.append('pincode', document.getElementById('addr_pincode').value);
+    formData.append('phone', document.getElementById('addr_phone').value);
+    
+    fetch('{% url "add_address" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: formData
+    }).then(r => r.json()).then(data => {
+      closeModal();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 1000);
+      }
+    });
+  };
+  modal.style.display = 'flex';
+}
+
+function editAddress(id, label, address, city, pincode, phone) {
+  const modal = document.getElementById('customModal');
+  document.getElementById('modalIcon').textContent = '✏️';
+  document.getElementById('modalTitle').textContent = 'Edit Address';
+  document.getElementById('modalMsg').innerHTML = `
+    <form id="editAddressForm" style="text-align:left;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Label</label>
+        <select id="edit_addr_label" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;">
+          <option value="Home" ${label==='Home'?'selected':''}>Home</option>
+          <option value="Work" ${label==='Work'?'selected':''}>Work</option>
+          <option value="Other" ${label==='Other'?'selected':''}>Other</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Address</label>
+        <input id="edit_addr_address" type="text" value="${address}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">City</label>
+          <input id="edit_addr_city" type="text" value="${city}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Pincode</label>
+          <input id="edit_addr_pincode" type="text" value="${pincode}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Phone</label>
+        <input id="edit_addr_phone" type="tel" value="${phone}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+      </div>
+    </form>
+  `;
+  const btn = document.getElementById('modalConfirmBtn');
+  btn.textContent = 'Save Changes';
+  btn.style.background = 'var(--primary)';
+  btn.onclick = () => {
+    const formData = new FormData();
+    formData.append('label',   document.getElementById('edit_addr_label').value);
+    formData.append('address', document.getElementById('edit_addr_address').value);
+    formData.append('city',    document.getElementById('edit_addr_city').value);
+    formData.append('pincode', document.getElementById('edit_addr_pincode').value);
+    formData.append('phone',   document.getElementById('edit_addr_phone').value);
+    fetch(`/profile/address/${id}/edit/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: formData
+    }).then(r => r.json()).then(data => {
+      closeModal();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 1000);
+      }
+    });
+  };
+  modal.style.display = 'flex';
+}
+
+function editPayment(id, cardholderName) {
+  const modal = document.getElementById('customModal');
+  document.getElementById('modalIcon').textContent = '✏️';
+  document.getElementById('modalTitle').textContent = 'Edit Payment Method';
+  document.getElementById('modalMsg').innerHTML = `
+    <div style="text-align:left;">
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Cardholder Name</label>
+      <input id="edit_cardholder" type="text" value="${cardholderName}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;box-sizing:border-box;">
+    </div>
+  `;
+  const btn = document.getElementById('modalConfirmBtn');
+  btn.textContent = 'Save Changes';
+  btn.style.background = 'var(--primary)';
+  btn.onclick = () => {
+    const formData = new FormData();
+    formData.append('cardholder_name', document.getElementById('edit_cardholder').value);
+    fetch(`/profile/payment/${id}/edit/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: formData
+    }).then(r => r.json()).then(data => {
+      closeModal();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 1000);
+      }
+    });
+  };
+  modal.style.display = 'flex';
+}
+
+function deleteAddress(id) {
+  if (!confirm('Delete this address?')) return;
+  fetch(`/profile/address/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      setTimeout(() => location.reload(), 1000);
+    }
+  });
+}
+
+function showAddPaymentModal() {
+  showToast('Payment method add feature coming soon! 🚀', 'info');
+}
+
+function deletePayment(id) {
+  if (!confirm('Delete this payment method?')) return;
+  fetch(`/profile/payment/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      setTimeout(() => location.reload(), 1000);
+    }
+  });
+}
+</script>
+{% endblock %}
